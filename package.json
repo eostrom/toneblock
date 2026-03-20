@@ -24,6 +24,8 @@
     "vite-plugin-solid": "^2.11.8"
   },
   "dependencies": {
+    "@elemaudio/core": "^4.0.1",
+    "@elemaudio/web-renderer": "^4.0.3",
     "solid-js": "^1.9.9"
   }
 }
