@@ -57,6 +57,11 @@ const getDirectionFromKey = (key: string): Direction | null => {
 }
 
 /**
+ * The base frequency for the root note (E3).
+ */
+const ROOT_FREQ = 110 * 2 ** (7 / 12)
+
+/**
  * The main ToneBlock game component.
  */
 export const Game: Component = () => {
@@ -81,7 +86,10 @@ export const Game: Component = () => {
     on(focused, async (block) => {
       await ctx.resume()
 
-      const freq = 220 * 2 ** ((1 / 12) * ((block ?? 0) - 1))
+      const scale = [0, 3, 5, 7, 10]
+      const index = (block ?? 1) - 1
+      const semitones = Math.floor(index / 5) * 12 + scale[index % 5]
+      const freq = ROOT_FREQ * 2 ** (semitones / 12)
       const node = el.mul(el.const({ value: block ? 1 : 0 }), el.cycle(freq))
       await core().render(node)
     }),
