@@ -6,7 +6,6 @@ import {
   onCleanup,
   onMount,
 } from 'solid-js'
-import { el } from '@elemaudio/core'
 import WebRenderer from '@elemaudio/web-renderer'
 import type { Block, Direction } from './domain/types'
 import { blocks, DELTAS, solvedGrid } from './domain/constants'
@@ -16,6 +15,7 @@ import {
   getPositionForBlock,
   isPositionInGrid,
 } from './domain/utils'
+import { blockTone } from './tone'
 
 /**
  * Shared audio context for synthesized block tones.
@@ -57,11 +57,6 @@ const getDirectionFromKey = (key: string): Direction | null => {
 }
 
 /**
- * The base frequency for the root note (E3).
- */
-const ROOT_FREQ = 110 * 2 ** (7 / 12)
-
-/**
  * The main ToneBlock game component.
  */
 export const Game: Component = () => {
@@ -86,12 +81,7 @@ export const Game: Component = () => {
     on(focused, async (block) => {
       await ctx.resume()
 
-      const scale = [0, 3, 5, 7, 10]
-      const index = (block ?? 1) - 1
-      const semitones = Math.floor(index / 5) * 12 + scale[index % 5]
-      const freq = ROOT_FREQ * 2 ** (semitones / 12)
-      const node = el.mul(el.const({ value: block ? 1 : 0 }), el.cycle(freq))
-      await core().render(node)
+      await core().render(blockTone(block))
     }),
   )
 
