@@ -7,14 +7,14 @@ import {
   onMount,
 } from 'solid-js'
 import WebRenderer from '@elemaudio/web-renderer'
-import type { Block, Direction } from './domain/types'
-import { blocks, DELTAS, solvedGrid } from './domain/constants'
+import type { Block, Direction } from './block/types'
+import { blocks, DELTAS, solvedGrid } from './block/constants'
 import {
   applyDeltaToPosition,
   getBlockAtPosition,
   getPositionForBlock,
   isPositionInGrid,
-} from './domain/utils'
+} from './block/utils'
 import { blockTone } from './tone'
 
 /**

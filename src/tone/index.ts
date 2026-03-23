@@ -1,5 +1,5 @@
 import { el } from '@elemaudio/core'
-import type { Block } from '../domain/types'
+import type { Block } from '../block/types'
 
 /**
  * The base frequency for the root note (E3).
