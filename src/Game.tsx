@@ -103,7 +103,10 @@ export const Game: Component = () => {
   }
 
   return (
-    <div class={'grid grid-cols-4 gap-2'} onKeyDown={onKeyDown}>
+    <div
+      class={'mx-auto grid w-full max-w-md grid-cols-4 gap-2'}
+      onKeyDown={onKeyDown}
+    >
       {blocks.map((block) => {
         const { row, column } = getPositionForBlock(block, grid())
 
@@ -112,7 +115,7 @@ export const Game: Component = () => {
             name="block"
             data-block-key={getBlockKey(block)}
             style={{ 'grid-row': row + 1, 'grid-column': column + 1 }}
-            class="hover:text-pink-500 focus:bg-pink-500"
+            class="flex aspect-square items-center justify-center border border-gray-300 text-xl font-bold hover:border-pink-500 hover:text-pink-500 focus:border-pink-500 focus:bg-pink-500 focus:outline-none"
             onfocus={() => setFocused(block)}
             onblur={() => setFocused(null)}
           >
