@@ -71,6 +71,8 @@ export const Game: Component = () => {
       outputChannelCount: [2],
     })
     node.connect(ctx.destination)
+
+    getButtonForBlock(null)?.focus()
   })
 
   onCleanup(async () => {
