@@ -14,6 +14,7 @@ import {
   getBlockAtPosition,
   getPositionForBlock,
   isPositionInGrid,
+  getMovableDirection,
 } from './block/utils'
 import { blockTone } from './tone'
 
@@ -54,6 +55,31 @@ const getDirectionFromKey = (key: string): Direction | null => {
     ArrowRight: 'Right',
   }
   return directions[key] ?? null
+}
+
+/**
+ * Styles for the movement indicator based on direction.
+ */
+const INDICATOR_STYLE: Record<
+  Direction,
+  { classList: string; clipPath: string }
+> = {
+  Up: {
+    classList: 'bottom-full left-0 w-full h-full bg-current',
+    clipPath: 'polygon(0% 100%, 100% 100%, 50% 50%)',
+  },
+  Down: {
+    classList: 'top-full left-0 w-full h-full bg-current',
+    clipPath: 'polygon(0% 0%, 100% 0%, 50% 50%)',
+  },
+  Left: {
+    classList: 'right-full top-0 w-full h-full bg-current',
+    clipPath: 'polygon(100% 0%, 100% 100%, 50% 50%)',
+  },
+  Right: {
+    classList: 'left-full top-0 w-full h-full bg-current',
+    clipPath: 'polygon(0% 0%, 0% 100%, 50% 50%)',
+  },
 }
 
 /**
@@ -106,23 +132,49 @@ export const Game: Component = () => {
 
   return (
     <div
-      class={'mx-auto grid w-full max-w-md grid-cols-4 gap-2'}
+      class={'mx-auto grid w-full max-w-md grid-cols-4'}
       onKeyDown={onKeyDown}
     >
       {blocks.map((block) => {
         const { row, column } = getPositionForBlock(block, grid())
+        const movableDirection = getMovableDirection(block, grid())
 
         return (
-          <button
-            name="block"
-            data-block-key={getBlockKey(block)}
+          <div
+            class="group relative"
+            classList={{
+              'z-20': focused() === block,
+              'group-hover:z-20': true,
+            }}
             style={{ 'grid-row': row + 1, 'grid-column': column + 1 }}
-            class="flex aspect-square items-center justify-center border border-gray-300 text-xl font-bold hover:bg-gray-100 hover:text-pink-600 focus:bg-pink-600 focus:text-white focus:outline-none focus:hover:bg-pink-700"
-            onfocus={() => setFocused(block)}
-            onblur={() => setFocused(null)}
           >
-            {block}
-          </button>
+            <button
+              name="block"
+              data-block-key={getBlockKey(block)}
+              class="flex aspect-square h-full w-full items-center justify-center border-t border-l border-gray-300 text-xl font-bold focus:text-white focus:outline-none"
+              classList={{
+                'hover:bg-gray-100 focus:bg-pink-600 focus:hover:bg-pink-700':
+                  !!movableDirection,
+                'hover:bg-gray-50 focus:bg-pink-600/50 focus:hover:bg-pink-700/50':
+                  !movableDirection,
+                // add outer borders on last column/row
+                'border-r': column === 3,
+                'border-b': row === 3,
+              }}
+              onfocus={() => setFocused(block)}
+              onblur={() => setFocused(null)}
+            >
+              {block}
+            </button>
+            {movableDirection && (
+              <div
+                class={`pointer-events-none absolute z-50 text-gray-100 opacity-0 group-focus-within:text-pink-600 group-focus-within:opacity-100 group-hover:opacity-100 group-focus-within:group-hover:text-pink-700 ${INDICATOR_STYLE[movableDirection].classList}`}
+                style={{
+                  'clip-path': INDICATOR_STYLE[movableDirection].clipPath,
+                }}
+              />
+            )}
+          </div>
         )
       })}
     </div>

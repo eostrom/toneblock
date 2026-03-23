@@ -1,4 +1,5 @@
-import type { Block, Delta, Grid, Position } from './types'
+import type { Block, Delta, Direction, Grid, Position } from './types'
+import { DELTAS } from './constants'
 
 /**
  * Finds the position of a specific block in the grid.
@@ -56,3 +57,31 @@ export const isPositionInGrid = (grid: Grid, position: Position): boolean =>
   position.row < grid.length &&
   position.column >= 0 &&
   position.column < (grid[0]?.length ?? 0)
+
+/**
+ * Determines in which direction a block can be moved, if any.
+ * A block can be moved if the null block is in the same row or column.
+ *
+ * @param block - The block to check.
+ * @param grid - The current grid state.
+ * @returns The direction to the null block, or null if it cannot move.
+ */
+export const getMovableDirection = (
+  block: Block | null,
+  grid: Grid,
+): Direction | null => {
+  if (block === null) return null
+
+  const position = getPositionForBlock(block, grid)
+  const nullPosition = getPositionForBlock(null, grid)
+
+  if (position.row === nullPosition.row) {
+    return position.column < nullPosition.column ? 'Right' : 'Left'
+  }
+
+  if (position.column === nullPosition.column) {
+    return position.row < nullPosition.row ? 'Down' : 'Up'
+  }
+
+  return null
+}
