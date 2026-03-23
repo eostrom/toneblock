@@ -19,6 +19,7 @@ import {
   getMovableBlocks,
   isSolved,
   moveBlock,
+  areNeighborsCorrect,
 } from './block/utils'
 import { blockTone } from './tone'
 
@@ -184,6 +185,15 @@ export const Game: Component = () => {
           const { row, column } = getPositionForBlock(block, grid())
           const movableDirection = getMovableDirection(block, grid())
 
+          const neighborBlockLeft = getBlockAtPosition(grid(), {
+            row,
+            column: column - 1,
+          })
+          const neighborBlockUp = getBlockAtPosition(grid(), {
+            row: row - 1,
+            column,
+          })
+
           return (
             <div
               class="group relative"
@@ -196,12 +206,22 @@ export const Game: Component = () => {
               <button
                 name="block"
                 data-block-key={getBlockKey(block)}
-                class="flex aspect-square h-full w-full items-center justify-center border-t border-l border-gray-300 text-xl font-bold focus:text-white focus:outline-none disabled:opacity-50"
+                class="flex aspect-square h-full w-full items-center justify-center border-gray-300 text-xl font-bold focus:text-white focus:outline-none disabled:opacity-50"
                 classList={{
                   'hover:bg-gray-100 focus:bg-pink-600 focus:hover:bg-pink-700':
                     isBlockMovable(block, grid()),
                   'hover:bg-gray-50 focus:bg-pink-600/50 focus:hover:bg-pink-700/50':
                     !isBlockMovable(block, grid()),
+                  'border-t': !areNeighborsCorrect(
+                    neighborBlockUp,
+                    block,
+                    'Down',
+                  ),
+                  'border-l': !areNeighborsCorrect(
+                    neighborBlockLeft,
+                    block,
+                    'Right',
+                  ),
                   // add outer borders on last column/row
                   'border-r': column === 3,
                   'border-b': row === 3,

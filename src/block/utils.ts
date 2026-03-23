@@ -83,6 +83,33 @@ export const isPositionInGrid = (grid: Grid, position: Position): boolean =>
   position.column < (grid[0]?.length ?? 0)
 
 /**
+ * Checks if two blocks are in their correct relative spatial relationship according to `solvedGrid`.
+ *
+ * @param blockA - The first block.
+ * @param blockB - The second block.
+ * @param direction - The direction from blockA to blockB ('Right' or 'Down').
+ * @returns True if they are in the correct spatial relationship.
+ */
+export const areNeighborsCorrect = (
+  blockA: Block | null,
+  blockB: Block | null,
+  direction: 'Right' | 'Down',
+): boolean => {
+  if (blockA === null || blockB === null) return false
+
+  const posA = getPositionForBlock(blockA, solvedGrid)
+  const posB = getPositionForBlock(blockB, solvedGrid)
+
+  if (direction === 'Right') {
+    return posA.row === posB.row && posA.column + 1 === posB.column
+  } else if (direction === 'Down') {
+    return posA.column === posB.column && posA.row + 1 === posB.row
+  }
+
+  return false
+}
+
+/**
  * Determines in which direction a block can be moved, if any.
  * A block can be moved if the null block is in the same row or column.
  *
