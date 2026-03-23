@@ -17,6 +17,14 @@ export type Position = {
 }
 
 /**
+ * Represents a range with inclusive min and max values.
+ */
+export type Range = {
+  min: number
+  max: number
+}
+
+/**
  * Represents a relative change in position.
  */
 export type Delta = {

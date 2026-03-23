@@ -15,6 +15,7 @@ import {
   getPositionForBlock,
   isPositionInGrid,
   getMovableDirection,
+  moveBlock,
 } from './block/utils'
 import { blockTone } from './tone'
 
@@ -130,6 +131,15 @@ export const Game: Component = () => {
     getButtonForBlock(nextBlock)?.focus()
   }
 
+  const onClick = (block: Block | null) => {
+    const movableDirection = getMovableDirection(block, grid())
+
+    if (movableDirection) {
+      setGrid(moveBlock(block, grid()))
+      getButtonForBlock(null)?.focus()
+    }
+  }
+
   return (
     <div
       class={'mx-auto grid w-full max-w-md grid-cols-4'}
@@ -163,6 +173,7 @@ export const Game: Component = () => {
               }}
               onfocus={() => setFocused(block)}
               onblur={() => setFocused(null)}
+              onclick={() => onClick(block)}
             >
               {block}
             </button>
