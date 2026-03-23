@@ -1,5 +1,5 @@
 import type { Block, Delta, Direction, Grid, Position, Range } from './types'
-import { DELTAS } from './constants'
+import { DELTAS, solvedGrid } from './constants'
 
 /**
  * Retrieves a row from the grid.
@@ -282,4 +282,39 @@ export const moveBlock = (block: Block | null, grid: Grid): Grid => {
   if (isDirectionHorizontal(movableDirection))
     return moveBlockHorizontally(grid, position)
   else return moveBlockVertically(grid, position)
+}
+
+/**
+ * Checks if a block can be moved in the current grid state.
+ *
+ * @param block - The block to check.
+ * @param grid - The current grid state.
+ * @returns True if the block is movable.
+ */
+export const isBlockMovable = (block: Block | null, grid: Grid): boolean =>
+  !!getMovableDirection(block, grid)
+
+/**
+ * Returns a list of all blocks that can currently be moved in the grid.
+ *
+ * @param grid - The current grid state.
+ * @returns An array of movable blocks.
+ */
+export const getMovableBlocks = (grid: Grid): Block[] =>
+  grid.flat().filter(
+    // This function will reject some values that are Blocks, but we declare it as a type guard
+    // to simplify returning `Block[]` from the main function.
+    (block): block is Block => block !== null && isBlockMovable(block, grid),
+  )
+
+/**
+ * Checks if the grid is in its solved state.
+ *
+ * @param grid - The current grid state.
+ * @returns True if the grid is solved.
+ */
+export const isSolved = (grid: Grid): boolean => {
+  return grid.every((row, i) =>
+    row.every((cell, j) => cell === solvedGrid[i][j]),
+  )
 }

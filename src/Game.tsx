@@ -15,6 +15,9 @@ import {
   getPositionForBlock,
   isPositionInGrid,
   getMovableDirection,
+  isBlockMovable,
+  getMovableBlocks,
+  isSolved,
   moveBlock,
 } from './block/utils'
 import { blockTone } from './tone'
@@ -91,6 +94,8 @@ export const Game: Component = () => {
   const [focused, setFocused] = createSignal<Block | null>(null)
   const [core] = createSignal(new WebRenderer())
 
+  const [shuffling, setShuffling] = createSignal(false)
+
   onMount(async () => {
     let node = await core().initialize(ctx, {
       numberOfInputs: 0,
@@ -115,6 +120,7 @@ export const Game: Component = () => {
   )
 
   const onKeyDown = (e: KeyboardEvent) => {
+    if (shuffling()) return
     const direction = getDirectionFromKey(e.key)
     if (!direction) return
 
@@ -140,54 +146,101 @@ export const Game: Component = () => {
     }
   }
 
-  return (
-    <div
-      class={'mx-auto grid w-full max-w-md grid-cols-4'}
-      onKeyDown={onKeyDown}
-    >
-      {blocks.map((block) => {
-        const { row, column } = getPositionForBlock(block, grid())
-        const movableDirection = getMovableDirection(block, grid())
+  const startShuffle = () => {
+    setShuffling(true)
+    shuffle(1000, 0)
+  }
 
-        return (
-          <div
-            class="group relative"
-            classList={{
-              'z-20': focused() === block,
-              'group-hover:z-20': true,
-            }}
-            style={{ 'grid-row': row + 1, 'grid-column': column + 1 }}
-          >
-            <button
-              name="block"
-              data-block-key={getBlockKey(block)}
-              class="flex aspect-square h-full w-full items-center justify-center border-t border-l border-gray-300 text-xl font-bold focus:text-white focus:outline-none"
+  const shuffle = (delay = 1000, moves = 0) => {
+    const movableBlocks = getMovableBlocks(grid())
+    if (movableBlocks.length === 0) {
+      setShuffling(false)
+      return
+    }
+
+    const randomBlock =
+      movableBlocks[Math.floor(Math.random() * movableBlocks.length)]
+
+    setGrid(moveBlock(randomBlock, grid()))
+
+    // Stop after a fixed number of moves for predictable entropy,
+    // and using a 0.8 multiplier for the delay as requested.
+    if (moves < 40) {
+      setTimeout(() => shuffle(delay * 0.8, moves + 1), delay)
+    } else {
+      setShuffling(false)
+    }
+  }
+
+  const reset = () => {
+    setGrid(solvedGrid)
+    getButtonForBlock(null)?.focus()
+  }
+
+  return (
+    <div class="mx-auto w-full max-w-md space-y-4">
+      <div class={'grid grid-cols-4'} onKeyDown={onKeyDown}>
+        {blocks.map((block) => {
+          const { row, column } = getPositionForBlock(block, grid())
+          const movableDirection = getMovableDirection(block, grid())
+
+          return (
+            <div
+              class="group relative"
               classList={{
-                'hover:bg-gray-100 focus:bg-pink-600 focus:hover:bg-pink-700':
-                  !!movableDirection,
-                'hover:bg-gray-50 focus:bg-pink-600/50 focus:hover:bg-pink-700/50':
-                  !movableDirection,
-                // add outer borders on last column/row
-                'border-r': column === 3,
-                'border-b': row === 3,
+                'z-20': focused() === block,
+                'group-hover:z-20': true,
               }}
-              onfocus={() => setFocused(block)}
-              onblur={() => setFocused(null)}
-              onclick={() => onClick(block)}
+              style={{ 'grid-row': row + 1, 'grid-column': column + 1 }}
             >
-              {block}
-            </button>
-            {movableDirection && (
-              <div
-                class={`pointer-events-none absolute z-50 text-gray-100 opacity-0 group-focus-within:text-pink-600 group-focus-within:opacity-100 group-hover:opacity-100 group-focus-within:group-hover:text-pink-700 ${INDICATOR_STYLE[movableDirection].classList}`}
-                style={{
-                  'clip-path': INDICATOR_STYLE[movableDirection].clipPath,
+              <button
+                name="block"
+                data-block-key={getBlockKey(block)}
+                class="flex aspect-square h-full w-full items-center justify-center border-t border-l border-gray-300 text-xl font-bold focus:text-white focus:outline-none disabled:opacity-50"
+                classList={{
+                  'hover:bg-gray-100 focus:bg-pink-600 focus:hover:bg-pink-700':
+                    isBlockMovable(block, grid()),
+                  'hover:bg-gray-50 focus:bg-pink-600/50 focus:hover:bg-pink-700/50':
+                    !isBlockMovable(block, grid()),
+                  // add outer borders on last column/row
+                  'border-r': column === 3,
+                  'border-b': row === 3,
                 }}
-              />
-            )}
-          </div>
-        )
-      })}
+                disabled={shuffling()}
+                onfocus={() => setFocused(block)}
+                onblur={() => setFocused(null)}
+                onclick={() => onClick(block)}
+              >
+                {block}
+              </button>
+              {movableDirection && (
+                <div
+                  class={`pointer-events-none absolute z-50 text-gray-100 opacity-0 group-focus-within:text-pink-600 group-focus-within:opacity-100 group-hover:opacity-100 group-focus-within:group-hover:text-pink-700 ${INDICATOR_STYLE[movableDirection].classList}`}
+                  style={{
+                    'clip-path': INDICATOR_STYLE[movableDirection].clipPath,
+                  }}
+                />
+              )}
+            </div>
+          )
+        })}
+      </div>
+      <div class="flex justify-center space-x-4">
+        <button
+          class="rounded bg-gray-200 px-4 py-2 font-bold text-gray-800 hover:bg-gray-300 disabled:opacity-50"
+          onclick={reset}
+          disabled={shuffling() || isSolved(grid())}
+        >
+          Reset
+        </button>
+        <button
+          class="rounded bg-pink-600 px-4 py-2 font-bold text-white hover:bg-pink-700 disabled:opacity-50"
+          onclick={startShuffle}
+          disabled={shuffling()}
+        >
+          Shuffle
+        </button>
+      </div>
     </div>
   )
 }
