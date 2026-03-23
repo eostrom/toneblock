@@ -115,7 +115,7 @@ export const Game: Component = () => {
             name="block"
             data-block-key={getBlockKey(block)}
             style={{ 'grid-row': row + 1, 'grid-column': column + 1 }}
-            class="flex aspect-square items-center justify-center border border-gray-300 text-xl font-bold hover:border-pink-500 hover:text-pink-500 focus:border-pink-500 focus:bg-pink-500 focus:outline-none"
+            class="flex aspect-square items-center justify-center border border-gray-300 text-xl font-bold hover:bg-gray-100 hover:text-pink-600 focus:bg-pink-600 focus:text-white focus:outline-none focus:hover:bg-pink-700"
             onfocus={() => setFocused(block)}
             onblur={() => setFocused(null)}
           >
