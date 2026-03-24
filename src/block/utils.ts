@@ -345,3 +345,63 @@ export const isSolved = (grid: Grid): boolean => {
     row.every((cell, j) => cell === solvedGrid[i][j]),
   )
 }
+
+/**
+ * Finds all contiguous groups of correct neighbors in the grid.
+ *
+ * @param grid - The current grid state.
+ * @returns An array of sets, where each set contains blocks in a contiguous group.
+ */
+export const getCorrectNeighborGroups = (grid: Grid): Set<Block>[] => {
+  const visited = new Set<Block>()
+  const groups: Set<Block>[] = []
+
+  const blocks = grid.flat().filter((b): b is Block => b !== null)
+
+  for (const block of blocks) {
+    if (visited.has(block)) continue
+
+    const group = new Set<Block>()
+    const queue = [block]
+    visited.add(block)
+    group.add(block)
+
+    while (queue.length > 0) {
+      const current = queue.shift()!
+      const pos = getPositionForBlock(current, grid)
+
+      const neighbors: [Position, 'Up' | 'Down' | 'Left' | 'Right'][] = [
+        [{ row: pos.row - 1, column: pos.column }, 'Up'],
+        [{ row: pos.row + 1, column: pos.column }, 'Down'],
+        [{ row: pos.row, column: pos.column - 1 }, 'Left'],
+        [{ row: pos.row, column: pos.column + 1 }, 'Right'],
+      ]
+
+      for (const [neighborPos, direction] of neighbors) {
+        if (isPositionInGrid(grid, neighborPos)) {
+          const neighborBlock = getBlockAtPosition(grid, neighborPos)
+          if (neighborBlock !== null && !visited.has(neighborBlock)) {
+            let correct = false
+            if (direction === 'Up')
+              correct = areNeighborsCorrect(neighborBlock, current, 'Down')
+            else if (direction === 'Down')
+              correct = areNeighborsCorrect(current, neighborBlock, 'Down')
+            else if (direction === 'Left')
+              correct = areNeighborsCorrect(neighborBlock, current, 'Right')
+            else if (direction === 'Right')
+              correct = areNeighborsCorrect(current, neighborBlock, 'Right')
+
+            if (correct) {
+              visited.add(neighborBlock)
+              group.add(neighborBlock)
+              queue.push(neighborBlock)
+            }
+          }
+        }
+      }
+    }
+    groups.push(group)
+  }
+
+  return groups
+}

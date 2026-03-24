@@ -21,6 +21,7 @@ import {
   isSolved,
   moveBlock,
   areNeighborsCorrect,
+  getCorrectNeighborGroups,
 } from './block/utils'
 import { blockTone } from './tone'
 
@@ -86,6 +87,30 @@ const INDICATOR_STYLE: Record<
     classList: 'left-full top-0 w-full h-full bg-current',
     clipPath: 'polygon(0% 0%, 0% 100%, 50% 50%)',
   },
+}
+
+/**
+ * Maps the size of a group to a Tailwind background color class.
+ *
+ * @param size - The size of the contiguous group.
+ * @param maxSize - The maximum possible size of a group.
+ * @returns A Tailwind background color class.
+ */
+const getBackgroundColorForGroupSize = (
+  size: number,
+  maxSize: number,
+): string => {
+  if (size <= 1) return 'bg-white'
+  if (size >= maxSize) return 'bg-gray-500'
+
+  const step = (maxSize - 1) / 5
+
+  if (size <= 1 + step) return 'bg-gray-100'
+  if (size <= 1 + step * 2) return 'bg-gray-200'
+  if (size <= 1 + step * 3) return 'bg-gray-300'
+  if (size <= 1 + step * 4) return 'bg-gray-400'
+
+  return 'bg-gray-500'
 }
 
 /**
@@ -181,6 +206,8 @@ export const Game: Component = () => {
     getButtonForBlock(null)?.focus()
   }
 
+  const groups = createMemo(() => getCorrectNeighborGroups(grid()))
+
   return (
     <div class="mx-auto w-full max-w-md space-y-4">
       <div
@@ -201,6 +228,14 @@ export const Game: Component = () => {
             column,
           })
 
+          const group = groups().find((g) => g.has(block as Block))
+          const groupSize = group?.size ?? 0
+          const maxGroupSize = gridWidth() * gridHeight() - 1
+          const bgColor = getBackgroundColorForGroupSize(
+            groupSize,
+            maxGroupSize,
+          )
+
           return (
             <div
               class="group relative"
@@ -213,7 +248,7 @@ export const Game: Component = () => {
               <button
                 name="block"
                 data-block-key={getBlockKey(block)}
-                class="flex aspect-square h-full w-full items-center justify-center border-gray-300 text-xl font-bold focus:text-white focus:outline-none disabled:opacity-50"
+                class={`flex aspect-square h-full w-full items-center justify-center border-gray-300 text-xl font-bold focus:text-white focus:outline-none disabled:opacity-50 ${bgColor}`}
                 classList={{
                   'hover:bg-blue-100 focus:bg-pink-600 focus:hover:bg-pink-700':
                     isBlockMovable(block, grid()),
@@ -267,6 +302,31 @@ export const Game: Component = () => {
         >
           Shuffle
         </button>
+      </div>
+      <div class="mt-4 space-y-2">
+        <h2 class="text-center font-bold text-gray-700">
+          Correct Neighbor Groups
+        </h2>
+        <div class="flex flex-wrap justify-center gap-1">
+          {groups()
+            .toSorted((a, b) => b.size - a.size)
+            .map((group) => {
+              const maxGroupSize = gridWidth() * gridHeight() - 1
+              const bgColor = getBackgroundColorForGroupSize(
+                group.size,
+                maxGroupSize,
+              )
+              return (
+                <div
+                  class={`rounded border border-gray-300 px-2 py-1 text-sm font-semibold shadow-sm ${bgColor}`}
+                >
+                  {Array.from(group)
+                    .toSorted((a, b) => a - b)
+                    .join(' ')}
+                </div>
+              )
+            })}
+        </div>
       </div>
     </div>
   )
