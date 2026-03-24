@@ -215,9 +215,9 @@ export const Game: Component = () => {
                 data-block-key={getBlockKey(block)}
                 class="flex aspect-square h-full w-full items-center justify-center border-gray-300 text-xl font-bold focus:text-white focus:outline-none disabled:opacity-50"
                 classList={{
-                  'hover:bg-gray-100 focus:bg-pink-600 focus:hover:bg-pink-700':
+                  'hover:bg-blue-100 focus:bg-pink-600 focus:hover:bg-pink-700':
                     isBlockMovable(block, grid()),
-                  'hover:bg-gray-50 focus:bg-pink-600/50 focus:hover:bg-pink-700/50':
+                  'hover:bg-blue-50 focus:bg-pink-600/50 focus:hover:bg-pink-700/50':
                     !isBlockMovable(block, grid()),
                   'border-t': !areNeighborsCorrect(
                     neighborBlockUp,
@@ -242,7 +242,7 @@ export const Game: Component = () => {
               </button>
               {movableDirection && (
                 <div
-                  class={`pointer-events-none absolute z-50 text-gray-100 opacity-0 group-focus-within:text-pink-600 group-focus-within:opacity-100 group-hover:opacity-100 group-focus-within:group-hover:text-pink-700 ${INDICATOR_STYLE[movableDirection].classList}`}
+                  class={`pointer-events-none absolute z-50 text-blue-100 opacity-0 group-focus-within:text-pink-600 group-focus-within:opacity-100 group-hover:opacity-100 group-focus-within:group-hover:text-pink-700 ${INDICATOR_STYLE[movableDirection].classList}`}
                   style={{
                     'clip-path': INDICATOR_STYLE[movableDirection].clipPath,
                   }}
@@ -254,7 +254,7 @@ export const Game: Component = () => {
       </div>
       <div class="flex justify-center space-x-4">
         <button
-          class="rounded bg-gray-200 px-4 py-2 font-bold text-gray-800 hover:bg-gray-300 disabled:opacity-50"
+          class="rounded bg-gray-200 px-4 py-2 font-bold text-gray-800 hover:bg-blue-300 disabled:opacity-50"
           onclick={reset}
           disabled={shuffling() || isSolved(grid())}
         >
