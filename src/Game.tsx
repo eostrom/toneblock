@@ -1,6 +1,7 @@
 import {
   type Component,
   createEffect,
+  createMemo,
   createSignal,
   on,
   onCleanup,
@@ -96,6 +97,8 @@ export const Game: Component = () => {
   const [core] = createSignal(new WebRenderer())
 
   const [shuffling, setShuffling] = createSignal(false)
+  const gridWidth = createMemo(() => grid()[0].length)
+  const gridHeight = createMemo(() => grid().length)
 
   onMount(async () => {
     let node = await core().initialize(ctx, {
@@ -180,7 +183,11 @@ export const Game: Component = () => {
 
   return (
     <div class="mx-auto w-full max-w-md space-y-4">
-      <div class={'grid grid-cols-4'} onKeyDown={onKeyDown}>
+      <div
+        class="grid"
+        style={{ 'grid-template-columns': `repeat(${gridWidth()}, 1fr)` }}
+        onKeyDown={onKeyDown}
+      >
         {blocks.map((block) => {
           const { row, column } = getPositionForBlock(block, grid())
           const movableDirection = getMovableDirection(block, grid())
@@ -223,8 +230,8 @@ export const Game: Component = () => {
                     'Right',
                   ),
                   // add outer borders on last column/row
-                  'border-r': column === 3,
-                  'border-b': row === 3,
+                  'border-r': column === gridWidth() - 1,
+                  'border-b': row === gridHeight() - 1,
                 }}
                 disabled={shuffling()}
                 onfocus={() => setFocused(block)}
