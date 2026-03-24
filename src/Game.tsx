@@ -12,18 +12,18 @@ import type { Block, Direction } from './block/types'
 import { blocks, DELTAS, solvedGrid } from './block/constants'
 import {
   applyDeltaToPosition,
+  areNeighborsCorrect,
   getBlockAtPosition,
-  getPositionForBlock,
-  isPositionInGrid,
-  getMovableDirection,
-  isBlockMovable,
+  getCorrectNeighborGroups,
   getMovableBlocks,
+  getMovableDirection,
+  getPositionForBlock,
+  isBlockMovable,
+  isPositionInGrid,
   isSolved,
   moveBlock,
-  areNeighborsCorrect,
-  getCorrectNeighborGroups,
 } from './block/utils'
-import { blockTone } from './tone'
+import { blockTone, blockTones } from './tone'
 
 /**
  * Shared audio context for synthesized block tones.
@@ -140,14 +140,6 @@ export const Game: Component = () => {
     await ctx.close()
   })
 
-  createEffect(
-    on(focused, async (block) => {
-      await ctx.resume()
-
-      await core().render(blockTone(block))
-    }),
-  )
-
   const onKeyDown = (e: KeyboardEvent) => {
     if (shuffling()) return
     const direction = getDirectionFromKey(e.key)
@@ -180,7 +172,9 @@ export const Game: Component = () => {
     shuffle(1000, 0)
   }
 
-  const shuffle = (delay = 1000, moves = 0) => {
+  const shuffle = async (delay = 1000, moves = 0) => {
+    await ctx.resume()
+
     const movableBlocks = getMovableBlocks(grid())
     if (movableBlocks.length === 0) {
       setShuffling(false)
@@ -193,7 +187,7 @@ export const Game: Component = () => {
     setGrid(moveBlock(randomBlock, grid()))
 
     // Stop after a fixed number of moves for predictable entropy,
-    // and using a 0.8 multiplier for the delay as requested.
+    // and using a 0.8 multiplier for the delay.
     if (moves < 40) {
       setTimeout(() => shuffle(delay * 0.8, moves + 1), delay)
     } else {
@@ -201,12 +195,24 @@ export const Game: Component = () => {
     }
   }
 
-  const reset = () => {
+  const reset = async () => {
     setGrid(solvedGrid)
     getButtonForBlock(null)?.focus()
+    await ctx.resume()
   }
 
-  const groups = createMemo(() => getCorrectNeighborGroups(grid()))
+  const sortedGroups = createMemo(() =>
+    getCorrectNeighborGroups(grid()).toSorted((a, b) => b.size - a.size),
+  )
+  const biggestGroup = createMemo(() => sortedGroups()[0])
+
+  createEffect(
+    on(biggestGroup, async (group) => {
+      await ctx.resume()
+
+      await core().render(blockTones([...group.values()]))
+    }),
+  )
 
   return (
     <div class="mx-auto w-full max-w-md space-y-4">
@@ -228,7 +234,7 @@ export const Game: Component = () => {
             column,
           })
 
-          const group = groups().find((g) => g.has(block as Block))
+          const group = sortedGroups().find((g) => g.has(block))
           const groupSize = group?.size ?? 0
           const maxGroupSize = gridWidth() * gridHeight() - 1
           const bgColor = getBackgroundColorForGroupSize(
@@ -308,24 +314,22 @@ export const Game: Component = () => {
           Correct Neighbor Groups
         </h2>
         <div class="flex flex-wrap justify-center gap-1">
-          {groups()
-            .toSorted((a, b) => b.size - a.size)
-            .map((group) => {
-              const maxGroupSize = gridWidth() * gridHeight() - 1
-              const bgColor = getBackgroundColorForGroupSize(
-                group.size,
-                maxGroupSize,
-              )
-              return (
-                <div
-                  class={`rounded border border-gray-300 px-2 py-1 text-sm font-semibold shadow-sm ${bgColor}`}
-                >
-                  {Array.from(group)
-                    .toSorted((a, b) => a - b)
-                    .join(' ')}
-                </div>
-              )
-            })}
+          {sortedGroups().map((group) => {
+            const maxGroupSize = gridWidth() * gridHeight() - 1
+            const bgColor = getBackgroundColorForGroupSize(
+              group.size,
+              maxGroupSize,
+            )
+            return (
+              <div
+                class={`rounded border border-gray-300 px-2 py-1 text-sm font-semibold shadow-sm ${bgColor}`}
+              >
+                {Array.from(group)
+                  .toSorted((a, b) => a - b)
+                  .join(' ')}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

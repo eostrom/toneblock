@@ -32,3 +32,7 @@ export function blockTone(block: Block | null) {
 
   return el.mul(el.const({ value: block ? 1 : 0 }), el.cycle(freq))
 }
+
+export function blockTones(blocks: Block[]) {
+  return el.add(...blocks.map(blockTone))
+}
