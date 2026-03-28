@@ -169,10 +169,10 @@ export const Game: Component = () => {
 
   const startShuffle = () => {
     setShuffling(true)
-    shuffle(1000, 0)
+    shuffle(1200, 0)
   }
 
-  const shuffle = async (delay = 1000, moves = 0) => {
+  const shuffle = async (delay = 2000, moves = 0) => {
     await ctx.resume()
 
     const movableBlocks = getMovableBlocks(grid())
@@ -188,7 +188,8 @@ export const Game: Component = () => {
 
     // Stop after a fixed number of moves for predictable entropy,
     // and using a 0.8 multiplier for the delay.
-    if (moves < 40) {
+    // Continue until the combined size of all non-singleton groups is no more than 4.
+    if (moves < 40 || combinedNonSingletonSize() > 4) {
       setTimeout(() => shuffle(delay * 0.8, moves + 1), delay)
     } else {
       setShuffling(false)
@@ -205,6 +206,11 @@ export const Game: Component = () => {
     getCorrectNeighborGroups(grid()).toSorted((a, b) => b.size - a.size),
   )
   const biggestGroup = createMemo(() => sortedGroups()[0])
+  const combinedNonSingletonSize = createMemo(() =>
+    sortedGroups()
+      .filter((g) => g.size > 1)
+      .reduce((acc, g) => acc + g.size, 0),
+  )
 
   createEffect(
     on(biggestGroup, async (group) => {

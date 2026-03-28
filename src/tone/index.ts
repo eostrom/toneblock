@@ -4,7 +4,7 @@ import type { Block } from '../block/types'
 /**
  * The base frequency for the root note (E3).
  */
-const ROOT_FREQ = 110 * 2 ** (7 / 12)
+const ROOT_FREQ = 110 * 2 ** (2 / 12)
 
 /**
  * Calculates the frequency for a given block.
