@@ -8,6 +8,7 @@ import {
   onMount,
 } from 'solid-js'
 import WebRenderer from '@elemaudio/web-renderer'
+import springSkyImage from './assets/images/spring-sky.jpg'
 import type { Block, Direction } from './block/types'
 import { blocks, DELTAS, solvedGrid } from './block/constants'
 import {
@@ -100,17 +101,17 @@ const getBackgroundColorForGroupSize = (
   size: number,
   maxSize: number,
 ): string => {
-  if (size <= 1) return 'bg-white'
-  if (size >= maxSize) return 'bg-gray-500'
+  if (size <= 1) return 'bg-gray-500'
+  if (size >= maxSize) return 'bg-white'
 
   const step = (maxSize - 1) / 5
 
-  if (size <= 1 + step) return 'bg-gray-100'
-  if (size <= 1 + step * 2) return 'bg-gray-200'
-  if (size <= 1 + step * 3) return 'bg-gray-300'
-  if (size <= 1 + step * 4) return 'bg-gray-400'
+  if (size <= 1 + step) return 'bg-gray-400'
+  if (size <= 1 + step * 2) return 'bg-gray-300'
+  if (size <= 1 + step * 3) return 'bg-gray-200'
+  if (size <= 1 + step * 4) return 'bg-gray-100'
 
-  return 'bg-gray-500'
+  return 'bg-white'
 }
 
 /**
@@ -243,14 +244,13 @@ export const Game: Component = () => {
           const group = sortedGroups().find((g) => g.has(block))
           const groupSize = group?.size ?? 0
           const maxGroupSize = gridWidth() * gridHeight() - 1
-          const bgColor = getBackgroundColorForGroupSize(
-            groupSize,
-            maxGroupSize,
-          )
+          const bgColor = block
+            ? getBackgroundColorForGroupSize(groupSize, maxGroupSize)
+            : ''
 
           return (
             <div
-              class="group relative"
+              class="group relative overflow-hidden"
               classList={{
                 'z-20': focused() === block,
                 'group-hover:z-20': true,
@@ -260,11 +260,11 @@ export const Game: Component = () => {
               <button
                 name="block"
                 data-block-key={getBlockKey(block)}
-                class={`flex aspect-square h-full w-full items-center justify-center border-gray-300 text-xl font-bold focus:text-white focus:outline-none disabled:opacity-50 ${bgColor}`}
+                class={`flex aspect-square h-full w-full items-center justify-center border-gray-300 text-xl font-bold focus:text-white focus:outline-none disabled:opacity-50 ${bgColor} bg-blend-multiply`}
                 classList={{
-                  'hover:bg-blue-100 focus:bg-pink-600 focus:hover:bg-pink-700':
+                  'hover:bg-blue-100/50 focus:bg-pink-600 focus:hover:bg-pink-700':
                     isBlockMovable(block, grid()),
-                  'hover:bg-blue-50 focus:bg-pink-600/50 focus:hover:bg-pink-700/50':
+                  'hover:bg-blue-50/50 focus:bg-pink-600/50 focus:hover:bg-pink-700/50':
                     !isBlockMovable(block, grid()),
                   'border-t': !areNeighborsCorrect(
                     neighborBlockUp,
@@ -279,13 +279,29 @@ export const Game: Component = () => {
                   // add outer borders on last column/row
                   'border-r': column === gridWidth() - 1,
                   'border-b': row === gridHeight() - 1,
+                  'bg-white': !block,
+                }}
+                style={{
+                  'background-image': block ? `url(${springSkyImage})` : 'none',
+                  'background-size': `${gridWidth() * 100}% ${
+                    gridHeight() * 100
+                  }%`,
+                  'background-position': (() => {
+                    if (!block) return '0 0'
+                    const pos = getPositionForBlock(block, solvedGrid)
+                    return `${(pos.column / (gridWidth() - 1)) * 100}% ${
+                      (pos.row / (gridHeight() - 1)) * 100
+                    }%`
+                  })(),
                 }}
                 disabled={shuffling()}
                 onfocus={() => setFocused(block)}
                 onblur={() => setFocused(null)}
                 onclick={() => onClick(block)}
               >
-                {block}
+                {block && (
+                  <span class="relative z-10 text-transparent">{block}</span>
+                )}
               </button>
               {movableDirection && (
                 <div
