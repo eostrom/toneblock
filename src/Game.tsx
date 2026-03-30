@@ -126,6 +126,12 @@ export const Game: Component = () => {
   const gridWidth = createMemo(() => grid()[0].length)
   const gridHeight = createMemo(() => grid().length)
 
+  const blocksInGridOrder = createMemo(() =>
+    grid().flatMap((row, rowIndex) =>
+      row.map((block, columnIndex) => ({ block, rowIndex, columnIndex })),
+    ),
+  )
+
   onMount(async () => {
     let node = await core().initialize(ctx, {
       numberOfInputs: 0,
@@ -228,17 +234,16 @@ export const Game: Component = () => {
         style={{ 'grid-template-columns': `repeat(${gridWidth()}, 1fr)` }}
         onKeyDown={onKeyDown}
       >
-        {blocks.map((block) => {
-          const { row, column } = getPositionForBlock(block, grid())
+        {blocksInGridOrder().map(({ block, rowIndex, columnIndex }) => {
           const movableDirection = getMovableDirection(block, grid())
 
           const neighborBlockLeft = getBlockAtPosition(grid(), {
-            row,
-            column: column - 1,
+            row: rowIndex,
+            column: columnIndex - 1,
           })
           const neighborBlockUp = getBlockAtPosition(grid(), {
-            row: row - 1,
-            column,
+            row: rowIndex - 1,
+            column: columnIndex,
           })
 
           const group = sortedGroups().find((g) => g.has(block))
@@ -255,7 +260,10 @@ export const Game: Component = () => {
                 'z-20': focused() === block,
                 'group-hover:z-20': true,
               }}
-              style={{ 'grid-row': row + 1, 'grid-column': column + 1 }}
+              style={{
+                'grid-row': rowIndex + 1,
+                'grid-column': columnIndex + 1,
+              }}
             >
               <button
                 name="block"
@@ -277,8 +285,8 @@ export const Game: Component = () => {
                     'Right',
                   ),
                   // add outer borders on last column/row
-                  'border-r': column === gridWidth() - 1,
-                  'border-b': row === gridHeight() - 1,
+                  'border-r': columnIndex === gridWidth() - 1,
+                  'border-b': rowIndex === gridHeight() - 1,
                   'bg-white': !block,
                 }}
                 style={{
