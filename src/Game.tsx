@@ -3,9 +3,11 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  For,
   on,
   onCleanup,
   onMount,
+  Show,
 } from 'solid-js'
 import WebRenderer from '@elemaudio/web-renderer'
 import springSkyImage from './assets/images/spring-sky.jpg'
@@ -123,6 +125,13 @@ export const Game: Component = () => {
   const [core] = createSignal(new WebRenderer())
 
   const [shuffling, setShuffling] = createSignal(false)
+  const [animating, setAnimating] = createSignal(false)
+  /**
+   * Combined state indicating that the game is currently performing an automated task
+   * (like shuffling or a block move animation) and should not process user input.
+   */
+  const busy = createMemo(() => shuffling() || animating())
+  
   const gridWidth = createMemo(() => grid()[0].length)
   const gridHeight = createMemo(() => grid().length)
 
@@ -147,8 +156,15 @@ export const Game: Component = () => {
     await ctx.close()
   })
 
+  const animateMove = async (block: Block | null) => {
+    setAnimating(true)
+    await animateGrid(moveBlock(block, grid()))
+    setAnimating(false)
+  }
+
   const onKeyDown = (e: KeyboardEvent) => {
-    if (shuffling()) return
+    if (busy()) return
+
     const direction = getDirectionFromKey(e.key)
     if (!direction) return
 
@@ -166,13 +182,14 @@ export const Game: Component = () => {
   }
 
   const onClick = (block: Block | null) => {
-    const movableDirection = getMovableDirection(block, grid())
+    if (busy()) return
 
-    if (movableDirection) {
-      setGrid(moveBlock(block, grid()))
+    const movableDirection = getMovableDirection(block, grid())
+    if (!movableDirection) return
+
+    animateMove(block)
       getButtonForBlock(null)?.focus()
     }
-  }
 
   const startShuffle = () => {
     setShuffling(true)
@@ -191,7 +208,7 @@ export const Game: Component = () => {
     const randomBlock =
       movableBlocks[Math.floor(Math.random() * movableBlocks.length)]
 
-    setGrid(moveBlock(randomBlock, grid()))
+    animateMove(randomBlock)
 
     // Stop after a fixed number of moves for predictable entropy,
     // and using a 0.8 multiplier for the delay.
@@ -204,6 +221,8 @@ export const Game: Component = () => {
   }
 
   const reset = async () => {
+    if (busy()) return
+
     setGrid(solvedGrid)
     getButtonForBlock(null)?.focus()
     await ctx.resume()
@@ -227,114 +246,184 @@ export const Game: Component = () => {
     }),
   )
 
+  const blockRefs = new Map<Block | null, HTMLDivElement>()
+
+  const animateGrid = (newGrid: (Block | null)[][]): Promise<void> => {
+    const duration = 300
+    const rects = new Map<Block | null, DOMRect>()
+
+    // FLIP: First (Capture initial positions)
+    blocks.forEach((block) => {
+      const element = blockRefs.get(block)
+      if (element) rects.set(block, element.getBoundingClientRect())
+    })
+
+    // FLIP: Last (Update state/DOM)
+    setGrid(newGrid)
+
+    // Wait for DOM to update.
+    requestAnimationFrame(() => {
+      blocks.forEach((block) => {
+        const element = blockRefs.get(block)
+        const initialRect = rects.get(block)
+        if (!element || !initialRect) return
+
+        const finalRect = element.getBoundingClientRect()
+
+        // FLIP: Invert
+        const deltaX = initialRect.left - finalRect.left
+        const deltaY = initialRect.top - finalRect.top
+
+        if (deltaX !== 0 || deltaY !== 0) {
+          element.style.transform = `translate(${deltaX}px, ${deltaY}px)`
+          element.style.transition = 'none'
+
+          // FLIP: Play
+          requestAnimationFrame(() => {
+            element.style.transition = `transform ${duration}ms ease-out`
+            element.style.transform = ''
+          })
+        }
+      })
+    })
+
+    // Return a promise that resolves when the transition is complete
+    return new Promise((resolve) => setTimeout(resolve, duration))
+  }
+
   return (
     <div class="mx-auto w-full max-w-md space-y-4">
+      <div class="relative">
       <div
         class="grid"
-        style={{ 'grid-template-columns': `repeat(${gridWidth()}, 1fr)` }}
+          role="grid"
+          aria-busy={busy()}
+          aria-live="polite"
+          aria-atomic="true"
+          classList={{ 'cursor-wait': busy() }}
+          style={{
+            'grid-template-columns': `repeat(${gridWidth()}, 1fr)`,
+            'grid-template-rows': `repeat(${gridHeight()}, 1fr)`,
+          }}
         onKeyDown={onKeyDown}
       >
-        {blocksInGridOrder().map(({ block, rowIndex, columnIndex }) => {
-          const movableDirection = getMovableDirection(block, grid())
+          <For each={blocks}>
+            {(block) => {
+              const movableDirection = () => getMovableDirection(block, grid())
 
-          const neighborBlockLeft = getBlockAtPosition(grid(), {
-            row: rowIndex,
-            column: columnIndex - 1,
-          })
-          const neighborBlockUp = getBlockAtPosition(grid(), {
-            row: rowIndex - 1,
-            column: columnIndex,
-          })
+              const bgColor = () => {
+                if (block === null) return 'transparent'
 
-          const group = sortedGroups().find((g) => g.has(block))
-          const groupSize = group?.size ?? 0
+                const group = () =>
+                  sortedGroups().find((g) => block !== null && g.has(block))
+                const groupSize = group()?.size ?? 0
           const maxGroupSize = gridWidth() * gridHeight() - 1
-          const bgColor = block
-            ? getBackgroundColorForGroupSize(groupSize, maxGroupSize)
-            : ''
+                return getBackgroundColorForGroupSize(groupSize, maxGroupSize)
+              }
+
+              const position = () => getPositionForBlock(block, grid())
+              const correctPosition = getPositionForBlock(block, solvedGrid)
 
           return (
             <div
+                  ref={(element) => blockRefs.set(block, element)}
               class="group relative overflow-hidden"
               classList={{
                 'z-20': focused() === block,
                 'group-hover:z-20': true,
+                    'opacity-0': block === null,
               }}
               style={{
-                'grid-row': rowIndex + 1,
-                'grid-column': columnIndex + 1,
+                    'grid-row': position().row + 1,
+                    'grid-column': position().column + 1,
               }}
             >
               <button
                 name="block"
                 data-block-key={getBlockKey(block)}
-                class={`flex aspect-square h-full w-full items-center justify-center border-gray-300 text-xl font-bold focus:text-white focus:outline-none disabled:opacity-50 ${bgColor} bg-blend-multiply`}
+                    class={`flex aspect-square h-full w-full items-center justify-center text-xl font-bold transition-colors focus:text-white focus:outline-none ${bgColor()} bg-blend-multiply`}
                 classList={{
+                      'cursor-wait': busy(),
                   'hover:bg-blue-100/50 focus:bg-pink-600 focus:hover:bg-pink-700':
-                    isBlockMovable(block, grid()),
+                        isBlockMovable(block, grid()) && !busy(),
                   'hover:bg-blue-50/50 focus:bg-pink-600/50 focus:hover:bg-pink-700/50':
-                    !isBlockMovable(block, grid()),
-                  'border-t': !areNeighborsCorrect(
-                    neighborBlockUp,
-                    block,
-                    'Down',
-                  ),
-                  'border-l': !areNeighborsCorrect(
-                    neighborBlockLeft,
-                    block,
-                    'Right',
-                  ),
-                  // add outer borders on last column/row
-                  'border-r': columnIndex === gridWidth() - 1,
-                  'border-b': rowIndex === gridHeight() - 1,
-                  'bg-white': !block,
+                        !isBlockMovable(block, grid()) || busy(),
                 }}
                 style={{
-                  'background-image': block ? `url(${springSkyImage})` : 'none',
+                      'background-image': block
+                        ? `url(${springSkyImage})`
+                        : 'none',
                   'background-size': `${gridWidth() * 100}% ${
                     gridHeight() * 100
                   }%`,
-                  'background-position': (() => {
-                    if (!block) return '0 0'
-                    const pos = getPositionForBlock(block, solvedGrid)
-                    return `${(pos.column / (gridWidth() - 1)) * 100}% ${
-                      (pos.row / (gridHeight() - 1)) * 100
-                    }%`
-                  })(),
+                      'background-position': `${(correctPosition.column / (gridWidth() - 1)) * 100}% ${(correctPosition.row / (gridHeight() - 1)) * 100}%`,
                 }}
-                disabled={shuffling()}
+                    disabled={busy()}
                 onfocus={() => setFocused(block)}
                 onblur={() => setFocused(null)}
                 onclick={() => onClick(block)}
               >
-                {block && (
-                  <span class="relative z-10 text-transparent">{block}</span>
+                    {block !== null && (
+                      <span class="relative z-10 text-transparent">
+                        {block}
+                      </span>
                 )}
               </button>
-              {movableDirection && (
+                  <Show when={movableDirection()}>
+                    {(direction) => (
                 <div
-                  class={`pointer-events-none absolute z-50 text-blue-100 opacity-0 group-focus-within:text-pink-600 group-focus-within:opacity-100 group-hover:opacity-100 group-focus-within:group-hover:text-pink-700 ${INDICATOR_STYLE[movableDirection].classList}`}
+                        class={`pointer-events-none absolute z-50 text-blue-100 opacity-0 group-focus-within:text-pink-600 group-focus-within:opacity-100 group-hover:opacity-100 group-focus-within:group-hover:text-pink-700 ${
+                          INDICATOR_STYLE[direction()].classList
+                        }`}
                   style={{
-                    'clip-path': INDICATOR_STYLE[movableDirection].clipPath,
+                          'clip-path': INDICATOR_STYLE[direction()].clipPath,
                   }}
                 />
               )}
+                  </Show>
             </div>
           )
-        })}
+            }}
+          </For>
+        </div>
+        {busy() && (
+          <div class="pointer-events-none absolute top-1 right-1 z-50 flex items-center gap-1.5 rounded-full bg-white/60 px-2 py-0.5 text-[10px] font-bold tracking-wider text-gray-700 uppercase shadow-sm backdrop-blur-sm">
+            <svg
+              class="h-3 w-3 animate-spin text-pink-600"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+            <span>{shuffling() ? 'Shuffling' : 'Animating'}</span>
+          </div>
+        )}
       </div>
       <div class="flex justify-center space-x-4">
         <button
           class="rounded bg-gray-200 px-4 py-2 font-bold text-gray-800 hover:bg-blue-300 disabled:opacity-50"
           onclick={reset}
-          disabled={shuffling() || isSolved(grid())}
+          disabled={busy() || isSolved(grid())}
         >
           Reset
         </button>
         <button
           class="rounded bg-pink-600 px-4 py-2 font-bold text-white hover:bg-pink-700 disabled:opacity-50"
           onclick={startShuffle}
-          disabled={shuffling()}
+          disabled={busy()}
         >
           Shuffle
         </button>

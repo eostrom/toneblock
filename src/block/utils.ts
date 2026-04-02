@@ -31,14 +31,16 @@ export const getColumnFromGrid = (
  * @param block - The block to find.
  * @param grid - The grid to search in.
  * @returns The coordinates of the block.
+ * @throws Error if the block is not found.
  */
 export const getPositionForBlock = (
   block: Block | null,
   grid: Grid,
 ): Position => {
   const rowIndex = grid.findIndex((row) => row.includes(block))
-  if (rowIndex === -1) return { row: 0, column: 0 }
+  if (rowIndex === -1) throw new Error('Block not found in grid')
   const columnIndex = grid[rowIndex].findIndex((cell) => cell === block)
+
   return { row: rowIndex, column: columnIndex }
 }
 
