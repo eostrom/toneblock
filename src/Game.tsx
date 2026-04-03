@@ -116,6 +116,14 @@ const getBackgroundColorForGroupSize = (
   return 'bg-white'
 }
 
+const createStatus = () => {
+  const [status, setStatus] = createSignal(false)
+  const start = () => setStatus(true)
+  const stop = () => setStatus(false)
+
+  return [status, start, stop]
+}
+
 /**
  * The main ToneBlock game component.
  */
@@ -124,8 +132,8 @@ export const Game: Component = () => {
   const [focused, setFocused] = createSignal<Block | null>(null)
   const [core] = createSignal(new WebRenderer())
 
-  const [shuffling, setShuffling] = createSignal(false)
-  const [animating, setAnimating] = createSignal(false)
+  const [shuffling, startShuffling, stopShuffling] = createStatus()
+  const [animating, startAnimating, stopAnimating] = createStatus()
   /**
    * Combined state indicating that the game is currently performing an automated task
    * (like shuffling or a block move animation) and should not process user input.
@@ -157,9 +165,9 @@ export const Game: Component = () => {
   })
 
   const animateMove = async (block: Block | null) => {
-    setAnimating(true)
+    startAnimating()
     await animateGrid(moveBlock(block, grid()))
-    setAnimating(false)
+    stopAnimating()
   }
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -191,8 +199,8 @@ export const Game: Component = () => {
       getButtonForBlock(null)?.focus()
     }
 
-  const startShuffle = () => {
-    setShuffling(true)
+  const handleClick = () => {
+    startShuffling()
     shuffle(1200, 0)
   }
 
@@ -201,7 +209,7 @@ export const Game: Component = () => {
 
     const movableBlocks = getMovableBlocks(grid())
     if (movableBlocks.length === 0) {
-      setShuffling(false)
+      stopShuffling()
       return
     }
 
@@ -422,7 +430,7 @@ export const Game: Component = () => {
         </button>
         <button
           class="rounded bg-pink-600 px-4 py-2 font-bold text-white hover:bg-pink-700 disabled:opacity-50"
-          onclick={startShuffle}
+          onclick={handleClick}
           disabled={busy()}
         >
           Shuffle
