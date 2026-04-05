@@ -441,16 +441,8 @@ export const Game: Component = () => {
           Correct Neighbor Groups
         </h2>
         <div class="flex flex-wrap justify-center gap-1">
-          {sortedGroups().map((group) => {
-            const maxGroupSize = gridWidth() * gridHeight() - 1
-            const bgColor = getBackgroundColorForGroupSize(
-              group.size,
-              maxGroupSize,
-            )
-            return (
-              <div
-                class={`rounded border border-gray-300 px-2 py-1 text-sm font-semibold shadow-sm ${bgColor}`}
-              >
+          {sortedGroups().map((group) => (
+            <div class="rounded border border-gray-300 px-2 py-1 text-sm font-semibold shadow-sm">
                 {Array.from(group)
                   .toSorted((a, b) => a - b)
                   .join(' ')}
