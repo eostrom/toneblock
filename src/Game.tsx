@@ -192,12 +192,8 @@ export const Game: Component = () => {
       getButtonForBlock(null)?.focus()
     }
 
-  const handleClick = () => {
+  const shuffle = async (delay = 1200, moves = 0) => {
     startShuffling()
-    shuffle(1200, 0)
-  }
-
-  const shuffle = async (delay = 2000, moves = 0) => {
     await ctx.resume()
 
     const movableBlocks = getMovableBlocks(grid())
@@ -425,7 +421,7 @@ export const Game: Component = () => {
         </button>
         <button
           class="rounded bg-pink-600 px-4 py-2 font-bold text-white hover:bg-pink-700 disabled:opacity-50"
-          onclick={handleClick}
+          onClick={() => shuffle()}
           disabled={busy()}
         >
           Shuffle
