@@ -164,9 +164,9 @@ export const Game: Component = () => {
     await ctx.close()
   })
 
-  const animateMove = async (block: Block | null) => {
+  const animateMove = async (block: Block | null, duration?: number) => {
     startAnimating()
-    await animateGrid(moveBlock(block, grid()))
+    await animateGrid(moveBlock(block, grid()), duration)
     stopAnimating()
   }
 
@@ -216,7 +216,7 @@ export const Game: Component = () => {
     const randomBlock =
       movableBlocks[Math.floor(Math.random() * movableBlocks.length)]
 
-    animateMove(randomBlock)
+    animateMove(randomBlock, delay)
 
     // Stop after a fixed number of moves for predictable entropy,
     // and using a 0.8 multiplier for the delay.
@@ -256,8 +256,10 @@ export const Game: Component = () => {
 
   const blockRefs = new Map<Block | null, HTMLDivElement>()
 
-  const animateGrid = (newGrid: (Block | null)[][]): Promise<void> => {
-    const duration = 300
+  const animateGrid = (
+    newGrid: (Block | null)[][],
+    duration: number = 300,
+  ): Promise<void> => {
     const rects = new Map<Block | null, DOMRect>()
 
     // FLIP: First (Capture initial positions)
@@ -447,8 +449,7 @@ export const Game: Component = () => {
                   .toSorted((a, b) => a - b)
                   .join(' ')}
               </div>
-            )
-          })}
+          ))}
         </div>
       </div>
     </div>
