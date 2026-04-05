@@ -224,7 +224,7 @@ export const Game: Component = () => {
     if (moves < 40 || combinedNonSingletonSize() > 4) {
       setTimeout(() => shuffle(delay * 0.8, moves + 1), delay)
     } else {
-      setShuffling(false)
+      stopShuffling()
     }
   }
 
