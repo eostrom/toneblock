@@ -1,5 +1,5 @@
 import type { Block, Delta, Direction, Grid, Position, Range } from './types'
-import { DELTAS, solvedGrid } from './constants'
+import { solvedGrid } from './constants'
 
 /**
  * Retrieves a row from the grid.

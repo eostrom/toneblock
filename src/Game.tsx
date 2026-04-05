@@ -15,7 +15,6 @@ import type { Block, Direction } from './block/types'
 import { blocks, DELTAS, solvedGrid } from './block/constants'
 import {
   applyDeltaToPosition,
-  areNeighborsCorrect,
   getBlockAtPosition,
   getCorrectNeighborGroups,
   getMovableBlocks,
@@ -26,7 +25,7 @@ import {
   isSolved,
   moveBlock,
 } from './block/utils'
-import { blockTone, blockTones } from './tone'
+import { blockTones } from './tone'
 
 /**
  * Shared audio context for synthesized block tones.
@@ -143,14 +142,8 @@ export const Game: Component = () => {
   const gridWidth = createMemo(() => grid()[0].length)
   const gridHeight = createMemo(() => grid().length)
 
-  const blocksInGridOrder = createMemo(() =>
-    grid().flatMap((row, rowIndex) =>
-      row.map((block, columnIndex) => ({ block, rowIndex, columnIndex })),
-    ),
-  )
-
   onMount(async () => {
-    let node = await core().initialize(ctx, {
+    const node = await core().initialize(ctx, {
       numberOfInputs: 0,
       numberOfOutputs: 1,
       outputChannelCount: [2],
@@ -369,9 +362,9 @@ export const Game: Component = () => {
                       'background-position': `${(correctPosition.column / (gridWidth() - 1)) * 100}% ${(correctPosition.row / (gridHeight() - 1)) * 100}%`,
                 }}
                     disabled={busy()}
-                onfocus={() => setFocused(block)}
-                onblur={() => setFocused(null)}
-                onclick={() => onClick(block)}
+                    onFocus={() => setFocused(block)}
+                    onBlur={() => setFocused(null)}
+                    onClick={() => onClick(block)}
               >
                     {block !== null && (
                       <span class="relative z-10 text-transparent">
@@ -425,7 +418,7 @@ export const Game: Component = () => {
       <div class="flex justify-center space-x-4">
         <button
           class="rounded bg-gray-200 px-4 py-2 font-bold text-gray-800 hover:bg-blue-300 disabled:opacity-50"
-          onclick={reset}
+          onClick={reset}
           disabled={busy() || isSolved(grid())}
         >
           Reset
@@ -443,13 +436,15 @@ export const Game: Component = () => {
           Correct Neighbor Groups
         </h2>
         <div class="flex flex-wrap justify-center gap-1">
-          {sortedGroups().map((group) => (
+          <For each={sortedGroups()}>
+            {(group) => (
             <div class="rounded border border-gray-300 px-2 py-1 text-sm font-semibold shadow-sm">
                 {Array.from(group)
                   .toSorted((a, b) => a - b)
                   .join(' ')}
               </div>
-          ))}
+            )}
+          </For>
         </div>
       </div>
     </div>
