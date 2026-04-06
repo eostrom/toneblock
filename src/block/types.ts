@@ -36,3 +36,15 @@ export type Delta = {
  * Represents the four cardinal directions for navigation.
  */
 export type Direction = 'Up' | 'Down' | 'Left' | 'Right'
+
+/**
+ * Represents the result of a movement path calculation.
+ *
+ * If no movement is possible (e.g., baseBlock is null or cannot move),
+ * the direction is null and affectedBlocks is an empty set.
+ */
+export interface MovementPath {
+  baseBlock: Block | null
+  direction: Direction | null
+  affectedBlocks: Set<Block | null>
+}

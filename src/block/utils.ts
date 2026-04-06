@@ -1,5 +1,13 @@
-import type { Block, Delta, Direction, Grid, Position, Range } from './types'
-import { solvedGrid } from './constants'
+import type {
+  Block,
+  Delta,
+  Direction,
+  Grid,
+  MovementPath,
+  Position,
+  Range,
+} from './types'
+import { NO_MOVEMENT_PATH, solvedGrid } from './constants'
 
 /**
  * Retrieves a row from the grid.
@@ -109,6 +117,46 @@ export const areNeighborsCorrect = (
   }
 
   return false
+}
+
+/**
+ * Calculates which blocks are affected when a specific block is moved.
+ *
+ * @param baseBlock - The block being moved.
+ * @param grid - The current grid state.
+ * @returns A MovementPath object containing the base block, direction, and affected blocks.
+ */
+export const getMovementPath = (
+  baseBlock: Block | null,
+  grid: Grid,
+): MovementPath => {
+  const direction = getMovableDirection(baseBlock, grid)
+  const affectedBlocks = new Set<Block | null>()
+
+  if (baseBlock === null || direction === null) return NO_MOVEMENT_PATH
+
+  const baseBlockPosition = getPositionForBlock(baseBlock, grid)
+  const nullBlockPosition = getPositionForBlock(null, grid)
+
+  if (direction === 'Up' || direction === 'Down') {
+    const minRow = Math.min(baseBlockPosition.row, nullBlockPosition.row)
+    const maxRow = Math.max(baseBlockPosition.row, nullBlockPosition.row)
+    for (let row = minRow; row <= maxRow; row++) {
+      if (row !== nullBlockPosition.row) {
+        affectedBlocks.add(grid[row][baseBlockPosition.column])
+      }
+    }
+  } else if (direction === 'Left' || direction === 'Right') {
+    const minCol = Math.min(baseBlockPosition.column, nullBlockPosition.column)
+    const maxCol = Math.max(baseBlockPosition.column, nullBlockPosition.column)
+    for (let col = minCol; col <= maxCol; col++) {
+      if (col !== nullBlockPosition.column) {
+        affectedBlocks.add(grid[baseBlockPosition.row][col])
+      }
+    }
+  }
+
+  return { baseBlock, direction, affectedBlocks }
 }
 
 /**

@@ -1,4 +1,13 @@
-import type { Delta, Direction, Grid } from './types'
+import type { Delta, Direction, Grid, MovementPath } from './types'
+
+/**
+ * Represents a path with no movement.
+ */
+export const NO_MOVEMENT_PATH: MovementPath = {
+  baseBlock: null,
+  direction: null,
+  affectedBlocks: new Set(),
+}
 
 /**
  * Initial set of block values.

@@ -12,13 +12,14 @@ import {
 import WebRenderer from '@elemaudio/web-renderer'
 import springSkyImage from './assets/images/spring-sky.jpg'
 import type { Block, Direction } from './block/types'
-import { blocks, DELTAS, solvedGrid } from './block/constants'
+import { blocks, DELTAS, NO_MOVEMENT_PATH, solvedGrid } from './block/constants'
 import {
   applyDeltaToPosition,
   getBlockAtPosition,
   getCorrectNeighborGroups,
   getMovableBlocks,
   getMovableDirection,
+  getMovementPath,
   getPositionForBlock,
   isBlockMovable,
   isPositionInGrid,
@@ -67,31 +68,6 @@ const getDirectionFromKey = (key: string): Direction | null => {
 }
 
 /**
- * Styles for the movement indicator based on direction.
- */
-const INDICATOR_STYLE: Record<
-  Direction,
-  { classList: string; clipPath: string }
-> = {
-  Up: {
-    classList: 'bottom-full left-0 w-full h-full bg-current',
-    clipPath: 'polygon(0% 100%, 100% 100%, 50% 50%)',
-  },
-  Down: {
-    classList: 'top-full left-0 w-full h-full bg-current',
-    clipPath: 'polygon(0% 0%, 100% 0%, 50% 50%)',
-  },
-  Left: {
-    classList: 'right-full top-0 w-full h-full bg-current',
-    clipPath: 'polygon(100% 0%, 100% 100%, 50% 50%)',
-  },
-  Right: {
-    classList: 'left-full top-0 w-full h-full bg-current',
-    clipPath: 'polygon(0% 0%, 0% 100%, 50% 50%)',
-  },
-}
-
-/**
  * Maps the size of a group to a Tailwind background color class.
  *
  * @param size - The size of the contiguous group.
@@ -129,6 +105,7 @@ const createStatus = () => {
 export const Game: Component = () => {
   const [grid, setGrid] = createSignal(solvedGrid)
   const [focused, setFocused] = createSignal<Block | null>(null)
+  const [hovered, setHovered] = createSignal<Block | null>(null)
   const [core] = createSignal(new WebRenderer())
 
   const [shuffling, startShuffling, stopShuffling] = createStatus()
@@ -308,8 +285,6 @@ export const Game: Component = () => {
       >
           <For each={blocks}>
             {(block) => {
-              const movableDirection = () => getMovableDirection(block, grid())
-
               const bgColor = () => {
                 if (block === null) return 'transparent'
 
@@ -322,11 +297,16 @@ export const Game: Component = () => {
 
               const position = () => getPositionForBlock(block, grid())
               const correctPosition = getPositionForBlock(block, solvedGrid)
+              const activeBlock = createMemo(() => hovered() ?? focused())
+              const pushDirection = () => {
+                const path = getMovementPath(activeBlock(), grid())
+                return path.affectedBlocks.has(block) ? path.direction : null
+              }
 
           return (
             <div
                   ref={(element) => blockRefs.set(block, element)}
-              class="group relative overflow-hidden"
+                  class="group relative"
               classList={{
                 'z-20': focused() === block,
                 'group-hover:z-20': true,
@@ -340,13 +320,16 @@ export const Game: Component = () => {
               <button
                 name="block"
                 data-block-key={getBlockKey(block)}
-                    class={`flex aspect-square h-full w-full items-center justify-center text-xl font-bold transition-colors focus:text-white focus:outline-none ${bgColor()} bg-blend-multiply`}
+                    class={`flex aspect-square h-full w-full items-center justify-center text-xl font-bold outline-0 outline-[rgba(219,39,119,0)] transition-all duration-200 focus:outline-4 focus:-outline-offset-4 focus:outline-[rgba(219,39,119,0.7)] ${bgColor()} bg-blend-multiply`}
                 classList={{
                       'cursor-wait': busy(),
-                  'hover:bg-blue-100/50 focus:bg-pink-600 focus:hover:bg-pink-700':
-                        isBlockMovable(block, grid()) && !busy(),
-                  'hover:bg-blue-50/50 focus:bg-pink-600/50 focus:hover:bg-pink-700/50':
-                        !isBlockMovable(block, grid()) || busy(),
+                      '-translate-y-[10%]': !busy() && pushDirection() === 'Up',
+                      'translate-y-[10%]':
+                        !busy() && pushDirection() === 'Down',
+                      '-translate-x-[10%]':
+                        !busy() && pushDirection() === 'Left',
+                      'translate-x-[10%]':
+                        !busy() && pushDirection() === 'Right',
                 }}
                 style={{
                       'background-image': block
@@ -360,6 +343,8 @@ export const Game: Component = () => {
                     disabled={busy()}
                     onFocus={() => setFocused(block)}
                     onBlur={() => setFocused(null)}
+                    onMouseEnter={() => setHovered(block)}
+                    onMouseLeave={() => setHovered(null)}
                     onClick={() => onClick(block)}
               >
                     {block !== null && (
@@ -368,18 +353,6 @@ export const Game: Component = () => {
                       </span>
                 )}
               </button>
-                  <Show when={movableDirection()}>
-                    {(direction) => (
-                <div
-                        class={`pointer-events-none absolute z-50 text-blue-100 opacity-0 group-focus-within:text-pink-600 group-focus-within:opacity-100 group-hover:opacity-100 group-focus-within:group-hover:text-pink-700 ${
-                          INDICATOR_STYLE[direction()].classList
-                        }`}
-                  style={{
-                          'clip-path': INDICATOR_STYLE[direction()].clipPath,
-                  }}
-                />
-              )}
-                  </Show>
             </div>
           )
             }}
