@@ -115,7 +115,7 @@ export const Game: Component = () => {
    * (like shuffling or a block move animation) and should not process user input.
    */
   const busy = createMemo(() => shuffling() || animating())
-  
+
   const gridWidth = createMemo(() => grid()[0].length)
   const gridHeight = createMemo(() => grid().length)
 
@@ -166,8 +166,8 @@ export const Game: Component = () => {
     if (!movableDirection) return
 
     animateMove(block)
-      getButtonForBlock(null)?.focus()
-    }
+    getButtonForBlock(null)?.focus()
+  }
 
   const shuffle = async (delay = 1200, moves = 0) => {
     startShuffling()
@@ -270,8 +270,8 @@ export const Game: Component = () => {
   return (
     <div class="mx-auto w-full max-w-md space-y-4">
       <div class="relative">
-      <div
-        class="grid"
+        <div
+          class="grid"
           role="grid"
           aria-busy={busy()}
           aria-live="polite"
@@ -281,8 +281,8 @@ export const Game: Component = () => {
             'grid-template-columns': `repeat(${gridWidth()}, 1fr)`,
             'grid-template-rows': `repeat(${gridHeight()}, 1fr)`,
           }}
-        onKeyDown={onKeyDown}
-      >
+          onKeyDown={onKeyDown}
+        >
           <For each={blocks}>
             {(block) => {
               const bgColor = () => {
@@ -291,7 +291,7 @@ export const Game: Component = () => {
                 const group = () =>
                   sortedGroups().find((g) => block !== null && g.has(block))
                 const groupSize = group()?.size ?? 0
-          const maxGroupSize = gridWidth() * gridHeight() - 1
+                const maxGroupSize = gridWidth() * gridHeight() - 1
                 return getBackgroundColorForGroupSize(groupSize, maxGroupSize)
               }
 
@@ -303,25 +303,25 @@ export const Game: Component = () => {
                 return path.affectedBlocks.has(block) ? path.direction : null
               }
 
-          return (
-            <div
+              return (
+                <div
                   ref={(element) => blockRefs.set(block, element)}
                   class="group relative"
-              classList={{
-                'z-20': focused() === block,
-                'group-hover:z-20': true,
+                  classList={{
+                    'z-20': focused() === block,
+                    'group-hover:z-20': true,
                     'opacity-0': block === null,
-              }}
-              style={{
+                  }}
+                  style={{
                     'grid-row': position().row + 1,
                     'grid-column': position().column + 1,
-              }}
-            >
-              <button
-                name="block"
-                data-block-key={getBlockKey(block)}
+                  }}
+                >
+                  <button
+                    name="block"
+                    data-block-key={getBlockKey(block)}
                     class={`flex aspect-square h-full w-full items-center justify-center text-xl font-bold outline-0 outline-[rgba(219,39,119,0)] transition-all duration-200 focus:outline-4 focus:-outline-offset-4 focus:outline-[rgba(219,39,119,0.7)] ${bgColor()} bg-blend-multiply`}
-                classList={{
+                    classList={{
                       'cursor-wait': busy(),
                       '-translate-y-[10%]': !busy() && pushDirection() === 'Up',
                       'translate-y-[10%]':
@@ -330,31 +330,31 @@ export const Game: Component = () => {
                         !busy() && pushDirection() === 'Left',
                       'translate-x-[10%]':
                         !busy() && pushDirection() === 'Right',
-                }}
-                style={{
+                    }}
+                    style={{
                       'background-image': block
                         ? `url(${springSkyImage})`
                         : 'none',
-                  'background-size': `${gridWidth() * 100}% ${
-                    gridHeight() * 100
-                  }%`,
+                      'background-size': `${gridWidth() * 100}% ${
+                        gridHeight() * 100
+                      }%`,
                       'background-position': `${(correctPosition.column / (gridWidth() - 1)) * 100}% ${(correctPosition.row / (gridHeight() - 1)) * 100}%`,
-                }}
+                    }}
                     disabled={busy()}
                     onFocus={() => setFocused(block)}
                     onBlur={() => setFocused(null)}
                     onMouseEnter={() => setHovered(block)}
                     onMouseLeave={() => setHovered(null)}
                     onClick={() => onClick(block)}
-              >
+                  >
                     {block !== null && (
                       <span class="relative z-10 text-transparent">
                         {block}
                       </span>
-                )}
-              </button>
-            </div>
-          )
+                    )}
+                  </button>
+                </div>
+              )
             }}
           </For>
         </div>
@@ -407,7 +407,7 @@ export const Game: Component = () => {
         <div class="flex flex-wrap justify-center gap-1">
           <For each={sortedGroups()}>
             {(group) => (
-            <div class="rounded border border-gray-300 px-2 py-1 text-sm font-semibold shadow-sm">
+              <div class="rounded border border-gray-300 px-2 py-1 text-sm font-semibold shadow-sm">
                 {Array.from(group)
                   .toSorted((a, b) => a - b)
                   .join(' ')}
