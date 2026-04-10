@@ -23,6 +23,7 @@ import {
   moveBlock,
 } from './block/utils'
 import { useToneBlockAudio } from './components/Game/useToneBlockAudio'
+import { useFlipAnimation } from './components/Game/useFlipAnimation'
 
 /**
  * Finds the DOM button element corresponding to a given block.
@@ -94,12 +95,12 @@ const createStatus = () => {
  */
 export const Game: Component = () => {
   const [grid, setGrid] = createSignal(solvedGrid)
+  const { animating, animateGrid, blockRefs } = useFlipAnimation(setGrid)
   const [focused, setFocused] = createSignal<Block | null>(null)
   const [hovered, setHovered] = createSignal<Block | null>(null)
   const [activeBlock, setActiveBlock] = createSignal<Block | null>(null)
 
   const [shuffling, startShuffling, stopShuffling] = createStatus()
-  const [animating, startAnimating, stopAnimating] = createStatus()
   /**
    * Combined state indicating that the game is currently performing an automated task
    * (like shuffling or a block move animation) and should not process user input.
@@ -116,9 +117,7 @@ export const Game: Component = () => {
   })
 
   const animateMove = async (block: Block | null, duration?: number) => {
-    startAnimating()
     await animateGrid(moveBlock(block, grid()), duration)
-    stopAnimating()
   }
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -174,53 +173,6 @@ export const Game: Component = () => {
   const sortedGroups = createMemo(() =>
     getCorrectNeighborGroups(grid()).toSorted((a, b) => b.size - a.size),
   )
-
-  const blockRefs = new Map<Block | null, HTMLDivElement>()
-
-  const animateGrid = (
-    newGrid: (Block | null)[][],
-    duration: number = 300,
-  ): Promise<void> => {
-    const rects = new Map<Block | null, DOMRect>()
-
-    // FLIP: First (Capture initial positions)
-    blocks.forEach((block) => {
-      const element = blockRefs.get(block)
-      if (element) rects.set(block, element.getBoundingClientRect())
-    })
-
-    // FLIP: Last (Update state/DOM)
-    setGrid(newGrid)
-
-    // Wait for DOM to update.
-    requestAnimationFrame(() => {
-      blocks.forEach((block) => {
-        const element = blockRefs.get(block)
-        const initialRect = rects.get(block)
-        if (!element || !initialRect) return
-
-        const finalRect = element.getBoundingClientRect()
-
-        // FLIP: Invert
-        const deltaX = initialRect.left - finalRect.left
-        const deltaY = initialRect.top - finalRect.top
-
-        if (deltaX !== 0 || deltaY !== 0) {
-          element.style.transform = `translate(${deltaX}px, ${deltaY}px)`
-          element.style.transition = 'none'
-
-          // FLIP: Play
-          requestAnimationFrame(() => {
-            element.style.transition = `transform ${duration}ms ease-out`
-            element.style.transform = ''
-          })
-        }
-      })
-    })
-
-    // Return a promise that resolves when the transition is complete
-    return new Promise((resolve) => setTimeout(resolve, duration))
-  }
 
   return (
     <div class="mx-auto w-full max-w-md space-y-4">
