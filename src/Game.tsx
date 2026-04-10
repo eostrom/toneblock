@@ -9,6 +9,7 @@ import {
   onMount,
 } from 'solid-js'
 import WebRenderer from '@elemaudio/web-renderer'
+import { unwait } from './utils/promise'
 import springSkyImage from './assets/images/spring-sky.jpg'
 import type { Block, Direction } from './block/types'
 import { blocks, DELTAS, solvedGrid } from './block/constants'
@@ -118,20 +119,20 @@ export const Game: Component = () => {
   const gridWidth = createMemo(() => grid()[0].length)
   const gridHeight = createMemo(() => grid().length)
 
-  onMount(async () => {
-    const node = await core().initialize(ctx, {
-      numberOfInputs: 0,
-      numberOfOutputs: 1,
-      outputChannelCount: [2],
-    })
-    node.connect(ctx.destination)
+  onMount(
+    unwait(async () => {
+      const node = await core().initialize(ctx, {
+        numberOfInputs: 0,
+        numberOfOutputs: 1,
+        outputChannelCount: [2],
+      })
+      node.connect(ctx.destination)
 
-    getButtonForBlock(null)?.focus()
-  })
+      getButtonForBlock(null)?.focus()
+    }),
+  )
 
-  onCleanup(async () => {
-    await ctx.close()
-  })
+  onCleanup(unwait(() => ctx.close()))
 
   const animateMove = async (block: Block | null, duration?: number) => {
     startAnimating()
@@ -158,39 +159,29 @@ export const Game: Component = () => {
     getButtonForBlock(nextBlock)?.focus()
   }
 
-  const onClick = (block: Block | null) => {
+  const onBlockClick = async (block: Block | null) => {
     if (busy()) return
 
     const movableDirection = getMovableDirection(block, grid())
     if (!movableDirection) return
 
-    animateMove(block)
+    await animateMove(block)
     getButtonForBlock(null)?.focus()
   }
 
-  const shuffle = async (delay = 1200, moves = 0) => {
+  const shuffle = async () => {
     startShuffling()
     await ctx.resume()
 
-    const movableBlocks = getMovableBlocks(grid())
-    if (movableBlocks.length === 0) {
-      stopShuffling()
-      return
+    for (let moves = 0; moves < 40; moves++) {
+      const movableBlocks = getMovableBlocks(grid())
+      const randomBlock =
+        movableBlocks[Math.floor(Math.random() * movableBlocks.length)]
+
+      await animateMove(randomBlock, 1200 * 0.8 ** moves)
     }
 
-    const randomBlock =
-      movableBlocks[Math.floor(Math.random() * movableBlocks.length)]
-
-    animateMove(randomBlock, delay)
-
-    // Stop after a fixed number of moves for predictable entropy,
-    // and using a 0.8 multiplier for the delay.
-    // Continue until the combined size of all non-singleton groups is no more than 4.
-    if (moves < 40 || combinedNonSingletonSize() > 4) {
-      setTimeout(() => shuffle(delay * 0.8, moves + 1), delay)
-    } else {
-      stopShuffling()
-    }
+    stopShuffling()
   }
 
   const reset = async () => {
@@ -205,11 +196,6 @@ export const Game: Component = () => {
     getCorrectNeighborGroups(grid()).toSorted((a, b) => b.size - a.size),
   )
   const biggestGroup = createMemo(() => sortedGroups()[0])
-  const combinedNonSingletonSize = createMemo(() =>
-    sortedGroups()
-      .filter((g) => g.size > 1)
-      .reduce((acc, g) => acc + g.size, 0),
-  )
 
   createEffect(
     on(biggestGroup, async (group) => {
@@ -329,9 +315,8 @@ export const Game: Component = () => {
                 else setActiveBlock(null)
               }
 
-              const handleClick = (e) => {
-                e.currentTarget.focus()
-                onClick(block)
+              const handleClick = () => {
+                unwait(onBlockClick)(block)
               }
 
               return (
@@ -416,14 +401,14 @@ export const Game: Component = () => {
       <div class="flex justify-center space-x-4">
         <button
           class="rounded bg-gray-200 px-4 py-2 font-bold text-gray-800 hover:bg-blue-300 disabled:opacity-50"
-          onClick={reset}
+          onClick={() => unwait(reset)()}
           disabled={busy() || isSolved(grid())}
         >
           Reset
         </button>
         <button
           class="rounded bg-pink-600 px-4 py-2 font-bold text-white hover:bg-pink-700 disabled:opacity-50"
-          onClick={() => shuffle()}
+          onClick={() => unwait(shuffle)()}
           disabled={busy()}
         >
           Shuffle

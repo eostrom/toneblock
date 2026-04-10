@@ -7,8 +7,6 @@
 - make motion indicator "tremble" while active
 - multiple components/helper functions
 - animate the reset/shuffle disable/enable transitions
-- consistently await async functions
-- lint unused exports
 - tab should move sequentially
 - empty cell focus state
 

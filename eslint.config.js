@@ -19,10 +19,18 @@ export default tseslint.config(
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      parserOptions: {
+        project: true,
+      },
     },
     rules: {
       'no-console': 'error',
       'object-shorthand': ['error', 'always'],
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      'solid/no-destructure': 'error',
+      'solid/prefer-classlist': 'warn',
     },
   },
   {
