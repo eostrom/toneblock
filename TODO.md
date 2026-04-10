@@ -4,7 +4,7 @@
 
 - simplify event handlers by making "active block" react to hover/focus state changes
 - explore other highlights: "biggest group only"? "correctly positioned blocks"?
-- bring back movable direction indicator
+- make motion indicator "tremble" while active
 - multiple components/helper functions
 - animate the reset/shuffle disable/enable transitions
 - consistently await async functions
