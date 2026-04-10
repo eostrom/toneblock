@@ -11,7 +11,7 @@
     "format-check": "prettier --check .",
     "format-fix": "prettier --write .",
     "lint-check": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint-fix": "eslint . --fix"
   },
   "license": "MIT",
   "devDependencies": {
