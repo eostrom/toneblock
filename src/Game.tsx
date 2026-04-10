@@ -8,7 +8,7 @@ import {
 import { unwait } from './utils/promise'
 import springSkyImage from './assets/images/spring-sky.jpg'
 import type { Block, Direction } from './block/types'
-import { blocks, DELTAS, solvedGrid } from './block/constants'
+import { DELTAS, solvedGrid } from './block/constants'
 import {
   applyDeltaToPosition,
   getBlockAtPosition,
@@ -121,10 +121,10 @@ export const Game: Component = () => {
   }
 
   const onKeyDown = (e: KeyboardEvent) => {
-    if (busy()) return
-
     const direction = getDirectionFromKey(e.key)
     if (!direction) return
+    e.preventDefault()
+    if (busy()) return
 
     const currentPosition = getPositionForBlock(focused(), grid())
     const nextPosition = applyDeltaToPosition(
@@ -134,7 +134,6 @@ export const Game: Component = () => {
 
     if (!isPositionInGrid(grid(), nextPosition)) return
 
-    e.preventDefault()
     const nextBlock = getBlockAtPosition(grid(), nextPosition)
     getButtonForBlock(nextBlock)?.focus()
   }
@@ -170,6 +169,8 @@ export const Game: Component = () => {
     getButtonForBlock(null)?.focus()
   }
 
+  const blocksInVisualOrder = createMemo(() => grid().flat())
+
   const sortedGroups = createMemo(() =>
     getCorrectNeighborGroups(grid()).toSorted((a, b) => b.size - a.size),
   )
@@ -190,7 +191,7 @@ export const Game: Component = () => {
           }}
           onKeyDown={onKeyDown}
         >
-          <For each={blocks}>
+          <For each={blocksInVisualOrder()}>
             {(block) => {
               const bgColor = () => {
                 if (block === null) return 'transparent'
@@ -202,7 +203,6 @@ export const Game: Component = () => {
                 return getBackgroundColorForGroupSize(groupSize, maxGroupSize)
               }
 
-              const position = () => getPositionForBlock(block, grid())
               const correctPosition = getPositionForBlock(block, solvedGrid)
               const pushDirection = () => {
                 const path = getMovementPath(activeBlock(), grid())
@@ -245,10 +245,6 @@ export const Game: Component = () => {
                 <div
                   ref={(element) => blockRefs.set(block, element)}
                   class="group relative"
-                  style={{
-                    'grid-row': position().row + 1,
-                    'grid-column': position().column + 1,
-                  }}
                 >
                   <button
                     name="block"

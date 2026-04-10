@@ -1,10 +1,31 @@
 import { render, screen, waitFor } from '@solidjs/testing-library'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, test } from 'vitest'
 import { Game } from './Game'
 import '@testing-library/jest-dom'
 import userEvent from '@testing-library/user-event'
 
 describe('Game', () => {
+  test('visual order matches the DOM order after blocks are moved', async () => {
+    const user = userEvent.setup()
+    render(() => <Game />)
+
+    const block4 = screen.getByRole('button', { name: '4' })
+    await user.click(block4)
+
+    // Focus should be on empty at (0, 3)
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'empty' })).toHaveFocus(),
+    )
+
+    // Press Down key. Focus moves from (0, 3) to (1, 3), which is block 4.
+    await user.keyboard('{ArrowDown}')
+    expect(screen.getByRole('button', { name: '4' })).toHaveFocus()
+
+    // Press Tab key. Focus moves from block 4 (1, 3) to 9 (1, 2).
+    await user.tab()
+    expect(screen.getByRole('button', { name: '9' })).toHaveFocus()
+  })
+
   describe('active block', () => {
     it('sets a movable block as active on hover', async () => {
       const user = userEvent.setup()
