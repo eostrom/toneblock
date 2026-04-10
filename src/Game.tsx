@@ -245,11 +245,6 @@ export const Game: Component = () => {
                 <div
                   ref={(element) => blockRefs.set(block, element)}
                   class="group relative"
-                  classList={{
-                    'z-20': focused() === block,
-                    'group-hover:z-20': true,
-                    'opacity-0': block === null,
-                  }}
                   style={{
                     'grid-row': position().row + 1,
                     'grid-column': position().column + 1,
