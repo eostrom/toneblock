@@ -14,6 +14,10 @@
 
 - write custom matcher for "indicating move"
 
+## audio
+
+- make useToneBlockAudio take a grid and figure out what's relevant?
+
 ## block
 
 - refactor getMovementPath using iterators and immutables or something
