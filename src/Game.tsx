@@ -1,14 +1,10 @@
 import {
   type Component,
-  createEffect,
   createMemo,
   createSignal,
   For,
-  on,
-  onCleanup,
   onMount,
 } from 'solid-js'
-import WebRenderer from '@elemaudio/web-renderer'
 import { unwait } from './utils/promise'
 import springSkyImage from './assets/images/spring-sky.jpg'
 import type { Block, Direction } from './block/types'
@@ -26,12 +22,7 @@ import {
   isSolved,
   moveBlock,
 } from './block/utils'
-import { blockTones } from './tone'
-
-/**
- * Shared audio context for synthesized block tones.
- */
-const ctx = new AudioContext()
+import { useToneBlockAudio } from './components/Game/useToneBlockAudio'
 
 /**
  * Finds the DOM button element corresponding to a given block.
@@ -106,7 +97,6 @@ export const Game: Component = () => {
   const [focused, setFocused] = createSignal<Block | null>(null)
   const [hovered, setHovered] = createSignal<Block | null>(null)
   const [activeBlock, setActiveBlock] = createSignal<Block | null>(null)
-  const [core] = createSignal(new WebRenderer())
 
   const [shuffling, startShuffling, stopShuffling] = createStatus()
   const [animating, startAnimating, stopAnimating] = createStatus()
@@ -119,20 +109,11 @@ export const Game: Component = () => {
   const gridWidth = createMemo(() => grid()[0].length)
   const gridHeight = createMemo(() => grid().length)
 
-  onMount(
-    unwait(async () => {
-      const node = await core().initialize(ctx, {
-        numberOfInputs: 0,
-        numberOfOutputs: 1,
-        outputChannelCount: [2],
-      })
-      node.connect(ctx.destination)
+  const audio = useToneBlockAudio(grid)
 
-      getButtonForBlock(null)?.focus()
-    }),
-  )
-
-  onCleanup(unwait(() => ctx.close()))
+  onMount(() => {
+    getButtonForBlock(null)?.focus()
+  })
 
   const animateMove = async (block: Block | null, duration?: number) => {
     startAnimating()
@@ -170,8 +151,8 @@ export const Game: Component = () => {
   }
 
   const shuffle = async () => {
+    await audio.activate()
     startShuffling()
-    await ctx.resume()
 
     for (let moves = 0; moves < 40; moves++) {
       const movableBlocks = getMovableBlocks(grid())
@@ -185,24 +166,13 @@ export const Game: Component = () => {
   }
 
   const reset = async () => {
-    if (busy()) return
-
+    await audio.activate()
     setGrid(solvedGrid)
     getButtonForBlock(null)?.focus()
-    await ctx.resume()
   }
 
   const sortedGroups = createMemo(() =>
     getCorrectNeighborGroups(grid()).toSorted((a, b) => b.size - a.size),
-  )
-  const biggestGroup = createMemo(() => sortedGroups()[0])
-
-  createEffect(
-    on(biggestGroup, async (group) => {
-      await ctx.resume()
-
-      await core().render(blockTones([...group.values()]))
-    }),
   )
 
   const blockRefs = new Map<Block | null, HTMLDivElement>()

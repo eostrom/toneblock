@@ -1,10 +1,12 @@
 ## Process
 
 - On encountering obstacles, ask the user for guidance.
-  - Example: if a test suite fails because a web platform API is not implemented in the testing environment,
-    ask the user before creating a mock implementation.
+    - Example: if a test suite fails because a web platform API is not implemented in the testing environment,
+      ask the user before creating a mock implementation.
+- When implementing a new feature, write unit tests first to clarify the desired behavior.
 - Use Wallaby to check test status and code coverage.
 - Run `pnpm lint-check` to identify violations and `pnpm lint-fix` to resolve them automatically where possible.
+    - If the lint check fails, **do not disable the rule**. If there's a simple way to fix the violation, do so. Otherwise, notify the user and leave the violation in place.
 
 ## Configuration
 
