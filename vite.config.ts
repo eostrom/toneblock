@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import solidPlugin from 'vite-plugin-solid'
 import devtools from 'solid-devtools/vite'
@@ -14,13 +15,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    transformMode: {
-      web: [/\.[jt]sx?$/],
-    },
     setupFiles: ['./vitest.setup.ts'],
-    deps: {
-      inline: [/solid-js/],
-    },
+    clearMocks: true,
   },
   resolve: {
     conditions: ['development', 'browser'],
