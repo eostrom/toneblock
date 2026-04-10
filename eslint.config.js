@@ -2,6 +2,8 @@ import js from '@eslint/js'
 import globals from 'globals'
 import solid from 'eslint-plugin-solid'
 import tseslint from 'typescript-eslint'
+import testingLibrary from 'eslint-plugin-testing-library'
+import jestDom from 'eslint-plugin-jest-dom'
 
 export default tseslint.config(
   {
@@ -21,6 +23,17 @@ export default tseslint.config(
     rules: {
       'no-console': 'error',
       'object-shorthand': ['error', 'always'],
+    },
+  },
+  {
+    files: ['**/*.test.{ts,tsx}'],
+    plugins: {
+      'testing-library': testingLibrary,
+      'jest-dom': jestDom,
+    },
+    rules: {
+      ...testingLibrary.configs.dom.rules,
+      ...jestDom.configs.recommended.rules,
     },
   },
 )
