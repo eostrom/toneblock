@@ -2,6 +2,7 @@
 
 ## game
 
+- simplify event handlers by making "active block" react to hover/focus state changes
 - explore other highlights: "biggest group only"? "correctly positioned blocks"?
 - bring back movable direction indicator
 - multiple components/helper functions
@@ -10,7 +11,10 @@
 - lint unused exports
 - tab should move sequentially
 - empty cell focus state
-- make `activeBlock` its own state variable, storing the most recently hovered/focused block
+
+## game test
+
+- write custom matcher for "indicating move"
 
 ## block
 

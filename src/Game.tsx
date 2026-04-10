@@ -7,12 +7,11 @@ import {
   on,
   onCleanup,
   onMount,
-  Show,
 } from 'solid-js'
 import WebRenderer from '@elemaudio/web-renderer'
 import springSkyImage from './assets/images/spring-sky.jpg'
 import type { Block, Direction } from './block/types'
-import { blocks, DELTAS, NO_MOVEMENT_PATH, solvedGrid } from './block/constants'
+import { blocks, DELTAS, solvedGrid } from './block/constants'
 import {
   applyDeltaToPosition,
   getBlockAtPosition,
@@ -34,22 +33,21 @@ import { blockTones } from './tone'
 const ctx = new AudioContext()
 
 /**
- * Generates a string identifier for a block to be used as a DOM attribute.
- *
- * @param block - The block to identify.
- * @returns A string key.
- */
-const getBlockKey = (block: Block | null): string =>
-  block === null ? 'null' : String(block)
-
-/**
  * Finds the DOM button element corresponding to a given block.
  *
  * @param block - The block to find.
  * @returns The button element or null.
  */
-const getButtonForBlock = (block: Block | null): HTMLButtonElement | null =>
-  document.querySelector(`button[data-block-key="${getBlockKey(block)}"]`)
+const getButtonForBlock = (block: Block | null): HTMLButtonElement | null => {
+  const buttons = Array.from(document.querySelectorAll('button[name="block"]'))
+
+  return (
+    (buttons.find((button) => {
+      if (block === null) return button.textContent === 'empty'
+      return button.textContent === String(block)
+    }) as HTMLButtonElement) ?? null
+  )
+}
 
 /**
  * Maps a keyboard key string to its corresponding navigation direction.
@@ -106,6 +104,7 @@ export const Game: Component = () => {
   const [grid, setGrid] = createSignal(solvedGrid)
   const [focused, setFocused] = createSignal<Block | null>(null)
   const [hovered, setHovered] = createSignal<Block | null>(null)
+  const [activeBlock, setActiveBlock] = createSignal<Block | null>(null)
   const [core] = createSignal(new WebRenderer())
 
   const [shuffling, startShuffling, stopShuffling] = createStatus()
@@ -297,10 +296,42 @@ export const Game: Component = () => {
 
               const position = () => getPositionForBlock(block, grid())
               const correctPosition = getPositionForBlock(block, solvedGrid)
-              const activeBlock = createMemo(() => hovered() ?? focused())
               const pushDirection = () => {
                 const path = getMovementPath(activeBlock(), grid())
                 return path.affectedBlocks.has(block) ? path.direction : null
+              }
+
+              const handleFocus = () => {
+                setFocused(block)
+                if (isBlockMovable(block, grid())) setActiveBlock(block)
+                else if (isBlockMovable(hovered(), grid()))
+                  setActiveBlock(hovered())
+              }
+
+              const handleBlur = () => {
+                setFocused(null)
+                if (isBlockMovable(hovered(), grid())) setActiveBlock(hovered())
+                else setActiveBlock(null)
+              }
+
+              const handleMouseEnter = () => {
+                setHovered(block)
+                if (isBlockMovable(block, grid())) setActiveBlock(block)
+              }
+
+              const handleMouseMove = () => {
+                if (isBlockMovable(block, grid())) setActiveBlock(block)
+              }
+
+              const handleMouseLeave = () => {
+                setHovered(null)
+                if (isBlockMovable(focused(), grid())) setActiveBlock(focused())
+                else setActiveBlock(null)
+              }
+
+              const handleClick = (e) => {
+                e.currentTarget.focus()
+                onClick(block)
               }
 
               return (
@@ -319,7 +350,6 @@ export const Game: Component = () => {
                 >
                   <button
                     name="block"
-                    data-block-key={getBlockKey(block)}
                     class={`flex aspect-square h-full w-full items-center justify-center text-xl font-bold outline-0 outline-[rgba(219,39,119,0)] transition-all duration-200 focus:outline-4 focus:-outline-offset-4 focus:outline-[rgba(219,39,119,0.7)] ${bgColor()} bg-blend-multiply`}
                     classList={{
                       'cursor-wait': busy(),
@@ -341,17 +371,16 @@ export const Game: Component = () => {
                       'background-position': `${(correctPosition.column / (gridWidth() - 1)) * 100}% ${(correctPosition.row / (gridHeight() - 1)) * 100}%`,
                     }}
                     disabled={busy()}
-                    onFocus={() => setFocused(block)}
-                    onBlur={() => setFocused(null)}
-                    onMouseEnter={() => setHovered(block)}
-                    onMouseLeave={() => setHovered(null)}
-                    onClick={() => onClick(block)}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={handleMouseLeave}
+                    onClick={handleClick}
                   >
-                    {block !== null && (
-                      <span class="relative z-10 text-transparent">
-                        {block}
-                      </span>
-                    )}
+                    <span class="relative z-10 text-transparent">
+                      {block || 'empty'}
+                    </span>
                   </button>
                 </div>
               )

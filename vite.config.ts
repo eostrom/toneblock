@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite'
-import { configDefaults } from 'vitest/config'
 import solidPlugin from 'vite-plugin-solid'
 import devtools from 'solid-devtools/vite'
 import tailwindcss from '@tailwindcss/vite'
