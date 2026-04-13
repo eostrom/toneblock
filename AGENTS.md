@@ -7,6 +7,7 @@
 - Use Wallaby to check test status and code coverage.
 - Run `pnpm lint-fix` to identify violations and resolve them automatically where possible.
     - If the lint check fails, **do not disable the rule**. If there's a simple way to fix the violation, do so. Otherwise, notify the user and leave the violation in place.
+- Run `pnpm test run` to run unit tests.
 
 ## Configuration
 
