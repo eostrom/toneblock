@@ -5,7 +5,7 @@
       ask the user before creating a mock implementation.
 - When implementing a new feature, write unit tests first to clarify the desired behavior.
 - Use Wallaby to check test status and code coverage.
-- Run `pnpm lint-check` to identify violations and `pnpm lint-fix` to resolve them automatically where possible.
+- Run `pnpm lint-fix` to identify violations and resolve them automatically where possible.
     - If the lint check fails, **do not disable the rule**. If there's a simple way to fix the violation, do so. Otherwise, notify the user and leave the violation in place.
 
 ## Configuration
@@ -23,6 +23,7 @@
 - Avoid abbreviations, especially one-letter ones.
   - For example, use `position`, not `pos`.
   - Allow exceptions for one-line functions and consistency with libraries.
+- JSDoc for a type need not say "Represents." All types represent.
 - If a JSDoc comment can fit on one line, keep it on one line.
 - If a function can fit on one line (without braces), keep it on one line.
 - If an if statement can fit on one line (without braces), keep it on one line.
@@ -31,12 +32,18 @@
   - In some cases an English word or phrase is better than a code term. For example "a solved grid" instead of `solvedGrid`.
 - Avoid inline comments that merely restate what the code is doing.
   - Comments should explain _why_ the code is doing what it is doing.
+- Avoid redundancy in naming.
+  - A component that represents a thing should be named `Thing` rather than `ThingComponent`.
+  - Props for a `Thing` component needn't have `Thing` in their names – `onClick`, not `onThingClick`.
 
 ## Implementation practices
 
 - Use `unwait` from `src/utils/promise` to wrap promise-returning functions in event handlers or lifecycle hooks where a void return is expected and the promise is intentionally not awaited.
 - SolidJS components
   - Avoid destructuring props or signals, as this breaks reactivity in SolidJS. Use direct access (e.g., `props.name` or `signal()`) unless within a tracking context where it's explicitly desired.
+  - Use `on` as a prefix for names of props that contain event callbacks. Use `handle` as a prefix for internal functions that are passed as `on` props. `onFoo={handleFoo}` is a common idiom. 
+    - In prop drilling, there's no need to create a `handle` wrapper. A component with an `onClick` prop can pass it directly to its child, like `<button onClick={onClick}>`.
+  - Name the props type for a component `Props`.
 
 ## Testing
 
