@@ -12,7 +12,7 @@ import { blocks } from '../../block/constants'
  * @param setGrid - A function to update the grid state.
  * @returns An object containing `animating`, `animateGrid`, and `blockRefs`.
  */
-export const useFlipAnimation = (setGrid: (grid: Grid) => void) => {
+export const useFlipAnimation = (setGrid: (grid: Grid) => unknown) => {
   const [animating, setAnimating] = createSignal(false)
   const blockRefs = new Map<Block | null, HTMLElement>()
 

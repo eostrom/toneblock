@@ -25,7 +25,9 @@
   - For example, use `position`, not `pos`.
   - Allow exceptions for one-line functions and consistency with libraries.
 - JSDoc for a type need not say "Represents." All types represent.
+- JSDoc for a boolean should indicate what is represented by `true`. E.g., "True if the process is in progress."
 - If a JSDoc comment can fit on one line, keep it on one line.
+  - Do not use three lines for a comment start marker, one line of prose, and a comment end marker. 
 - If a function can fit on one line (without braces), keep it on one line.
 - If an if statement can fit on one line (without braces), keep it on one line.
 - In JSDoc comments, test descriptions, comments, and other prose, use backquotes to mark variable names, type names, and other code terms.
