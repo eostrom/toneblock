@@ -1,4 +1,4 @@
-import { type Component, For, onMount } from 'solid-js'
+import { type Component, createEffect, For, on, onMount } from 'solid-js'
 import { unwait } from './utils/promise'
 import springSkyImage from './assets/images/spring-sky.jpg'
 import type { Block, Direction } from './block/types'
@@ -83,7 +83,7 @@ export const Game: Component = () => {
   const [gridState, setGridState] = createGridStore()
   const [gameState, setGameState] = createGameStore()
 
-  const { animateGrid, blockRefs } = useFlipAnimation((newGrid) =>
+  const { animating, animateGrid, blockRefs } = useFlipAnimation((newGrid) =>
     setGridState('grid', newGrid),
   )
 
@@ -94,11 +94,10 @@ export const Game: Component = () => {
     getButtonForBlock(null)?.focus()
   })
 
-  const animateMove = async (block: Block | null, duration?: number) => {
-    setGameState('animating', true)
+  const animateMove = async (block: Block | null, duration?: number) =>
     await animateGrid(moveBlock(block, gridState.grid), duration)
-    setGameState('animating', false)
-  }
+
+  createEffect(on(animating, (value) => setGameState('animating', value)))
 
   const onKeyDown = (e: KeyboardEvent) => {
     const direction = getDirectionFromKey(e.key)
