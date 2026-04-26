@@ -151,9 +151,6 @@ export const Game: Component = () => {
     getButtonForBlock(null)?.focus()
   }
 
-  const sortedGroups = () =>
-    gridState.correctNeighborGroups.toSorted((a, b) => b.size - a.size)
-
   return (
     <div class="mx-auto w-full max-w-md space-y-4">
       <div class="relative">
@@ -176,7 +173,9 @@ export const Game: Component = () => {
                 if (block === null) return 'transparent'
 
                 const group = () =>
-                  sortedGroups().find((g) => block !== null && g.has(block))
+                  gridState.correctNeighborGroups.find(
+                    (g) => block !== null && g.has(block),
+                  )
                 const groupSize = group()?.size ?? 0
                 const maxGroupSize = gridState.width * gridState.height - 1
                 return getBackgroundColorForGroupSize(groupSize, maxGroupSize)
@@ -314,22 +313,6 @@ export const Game: Component = () => {
         >
           Shuffle
         </button>
-      </div>
-      <div class="mt-4 space-y-2">
-        <h2 class="text-center font-bold text-gray-700">
-          Correct Neighbor Groups
-        </h2>
-        <div class="flex flex-wrap justify-center gap-1">
-          <For each={sortedGroups()}>
-            {(group) => (
-              <div class="rounded border border-gray-300 px-2 py-1 text-sm font-semibold shadow-sm">
-                {Array.from(group)
-                  .toSorted((a, b) => a - b)
-                  .join(' ')}
-              </div>
-            )}
-          </For>
-        </div>
       </div>
     </div>
   )
