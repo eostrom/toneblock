@@ -17,7 +17,7 @@ import {
 import { useToneBlockAudio } from './components/Game/useToneBlockAudio'
 import { useFlipAnimation } from './components/Game/useFlipAnimation'
 import { createGridStore } from './stores/gridStore'
-import { createGameStore } from './stores/gameStore'
+import { createViewStore } from './stores/viewStore'
 
 /**
  * Finds the DOM button element corresponding to a given block.
@@ -81,7 +81,7 @@ const getBackgroundColorForGroupSize = (
  */
 export const Game: Component = () => {
   const [gridState, setGridState] = createGridStore()
-  const [gameState, setGameState] = createGameStore()
+  const [viewState, setViewState] = createViewStore()
 
   const { animating, animateGrid, blockRefs } = useFlipAnimation((newGrid) =>
     setGridState('grid', newGrid),
@@ -97,16 +97,16 @@ export const Game: Component = () => {
   const animateMove = async (block: Block | null, duration?: number) =>
     await animateGrid(moveBlock(block, gridState.grid), duration)
 
-  createEffect(on(animating, (value) => setGameState('animating', value)))
+  createEffect(on(animating, (value) => setViewState('animating', value)))
 
   const onKeyDown = (e: KeyboardEvent) => {
     const direction = getDirectionFromKey(e.key)
     if (!direction) return
     e.preventDefault()
-    if (gameState.busy) return
+    if (viewState.busy) return
 
     const currentPosition = getPositionForBlock(
-      gameState.focusedBlock,
+      viewState.focusedBlock,
       gridState.grid,
     )
     const nextPosition = applyDeltaToPosition(
@@ -121,7 +121,7 @@ export const Game: Component = () => {
   }
 
   const onBlockClick = async (block: Block | null) => {
-    if (gameState.busy) return
+    if (viewState.busy) return
 
     const movableDirection = getMovableDirection(block, gridState.grid)
     if (!movableDirection) return
@@ -132,7 +132,7 @@ export const Game: Component = () => {
 
   const shuffle = async () => {
     await audio.activate()
-    setGameState('shuffling', true)
+    setViewState('shuffling', true)
 
     for (let moves = 0; moves < 40; moves++) {
       const movableBlocks = getMovableBlocks(gridState.grid)
@@ -142,7 +142,7 @@ export const Game: Component = () => {
       await animateMove(randomBlock, 1200 * 0.8 ** moves)
     }
 
-    setGameState('shuffling', false)
+    setViewState('shuffling', false)
   }
 
   const reset = async () => {
@@ -157,10 +157,10 @@ export const Game: Component = () => {
         <div
           class="grid"
           role="grid"
-          aria-busy={gameState.busy}
+          aria-busy={viewState.busy}
           aria-live="polite"
           aria-atomic="true"
-          classList={{ 'cursor-wait': gameState.busy }}
+          classList={{ 'cursor-wait': viewState.busy }}
           style={{
             'grid-template-columns': `repeat(${gridState.width}, 1fr)`,
             'grid-template-rows': `repeat(${gridState.height}, 1fr)`,
@@ -184,43 +184,43 @@ export const Game: Component = () => {
               const correctPosition = getPositionForBlock(block, solvedGrid)
               const pushDirection = () => {
                 const path = getMovementPath(
-                  gameState.activeBlock,
+                  viewState.activeBlock,
                   gridState.grid,
                 )
                 return path.affectedBlocks.has(block) ? path.direction : null
               }
 
               const handleFocus = () => {
-                setGameState('focusedBlock', block)
+                setViewState('focusedBlock', block)
                 if (isBlockMovable(block, gridState.grid))
-                  setGameState('activeBlock', block)
-                else if (isBlockMovable(gameState.hoveredBlock, gridState.grid))
-                  setGameState('activeBlock', gameState.hoveredBlock)
+                  setViewState('activeBlock', block)
+                else if (isBlockMovable(viewState.hoveredBlock, gridState.grid))
+                  setViewState('activeBlock', viewState.hoveredBlock)
               }
 
               const handleBlur = () => {
-                setGameState('focusedBlock', null)
-                if (isBlockMovable(gameState.hoveredBlock, gridState.grid))
-                  setGameState('activeBlock', gameState.hoveredBlock)
-                else setGameState('activeBlock', null)
+                setViewState('focusedBlock', null)
+                if (isBlockMovable(viewState.hoveredBlock, gridState.grid))
+                  setViewState('activeBlock', viewState.hoveredBlock)
+                else setViewState('activeBlock', null)
               }
 
               const handleMouseEnter = () => {
-                setGameState('hoveredBlock', block)
+                setViewState('hoveredBlock', block)
                 if (isBlockMovable(block, gridState.grid))
-                  setGameState('activeBlock', block)
+                  setViewState('activeBlock', block)
               }
 
               const handleMouseMove = () => {
                 if (isBlockMovable(block, gridState.grid))
-                  setGameState('activeBlock', block)
+                  setViewState('activeBlock', block)
               }
 
               const handleMouseLeave = () => {
-                setGameState('hoveredBlock', null)
-                if (isBlockMovable(gameState.focusedBlock, gridState.grid))
-                  setGameState('activeBlock', gameState.focusedBlock)
-                else setGameState('activeBlock', null)
+                setViewState('hoveredBlock', null)
+                if (isBlockMovable(viewState.focusedBlock, gridState.grid))
+                  setViewState('activeBlock', viewState.focusedBlock)
+                else setViewState('activeBlock', null)
               }
 
               const handleClick = () => {
@@ -236,15 +236,15 @@ export const Game: Component = () => {
                     name="block"
                     class={`flex aspect-square h-full w-full items-center justify-center text-xl font-bold outline-0 outline-[rgba(219,39,119,0)] transition-all duration-200 focus:outline-4 focus:-outline-offset-4 focus:outline-[rgba(219,39,119,0.7)] ${bgColor()} bg-blend-multiply`}
                     classList={{
-                      'cursor-wait': gameState.busy,
+                      'cursor-wait': viewState.busy,
                       '-translate-y-[10%]':
-                        !gameState.busy && pushDirection() === 'Up',
+                        !viewState.busy && pushDirection() === 'Up',
                       'translate-y-[10%]':
-                        !gameState.busy && pushDirection() === 'Down',
+                        !viewState.busy && pushDirection() === 'Down',
                       '-translate-x-[10%]':
-                        !gameState.busy && pushDirection() === 'Left',
+                        !viewState.busy && pushDirection() === 'Left',
                       'translate-x-[10%]':
-                        !gameState.busy && pushDirection() === 'Right',
+                        !viewState.busy && pushDirection() === 'Right',
                     }}
                     style={{
                       'background-image': block
@@ -255,7 +255,7 @@ export const Game: Component = () => {
                       }%`,
                       'background-position': `${(correctPosition.column / (gridState.width - 1)) * 100}% ${(correctPosition.row / (gridState.height - 1)) * 100}%`,
                     }}
-                    disabled={gameState.busy}
+                    disabled={viewState.busy}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
                     onMouseEnter={handleMouseEnter}
@@ -272,7 +272,7 @@ export const Game: Component = () => {
             }}
           </For>
         </div>
-        {gameState.busy && (
+        {viewState.busy && (
           <div class="pointer-events-none absolute top-1 right-1 z-50 flex items-center gap-1.5 rounded-full bg-white/60 px-2 py-0.5 text-[10px] font-bold tracking-wider text-gray-700 uppercase shadow-sm backdrop-blur-sm">
             <svg
               class="h-3 w-3 animate-spin text-pink-600"
@@ -294,7 +294,7 @@ export const Game: Component = () => {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            <span>{gameState.busyStatus}</span>
+            <span>{viewState.busyStatus}</span>
           </div>
         )}
       </div>
@@ -302,14 +302,14 @@ export const Game: Component = () => {
         <button
           class="rounded bg-gray-200 px-4 py-2 font-bold text-gray-800 hover:bg-blue-300 disabled:opacity-50"
           onClick={() => unwait(reset)()}
-          disabled={gameState.busy || gridState.isSolved}
+          disabled={viewState.busy || gridState.isSolved}
         >
           Reset
         </button>
         <button
           class="rounded bg-pink-600 px-4 py-2 font-bold text-white hover:bg-pink-700 disabled:opacity-50"
           onClick={() => unwait(shuffle)()}
-          disabled={gameState.busy}
+          disabled={viewState.busy}
         >
           Shuffle
         </button>
