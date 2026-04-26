@@ -1,4 +1,4 @@
-import { type Component, createEffect, For, on, onMount } from 'solid-js'
+import { type Component, For, onMount } from 'solid-js'
 import { unwait } from './utils/promise'
 import springSkyImage from './assets/images/spring-sky.jpg'
 import type { Block, Direction } from './block/types'
@@ -16,8 +16,7 @@ import {
 } from './block/utils'
 import { useToneBlockAudio } from './components/Game/useToneBlockAudio'
 import { useFlipAnimation } from './components/Game/useFlipAnimation'
-import { createGridStore } from './stores/gridStore'
-import { createViewStore } from './stores/viewStore'
+import { useGame } from './stores/GameContext'
 
 /**
  * Finds the DOM button element corresponding to a given block.
@@ -80,14 +79,15 @@ const getBackgroundColorForGroupSize = (
  * The main ToneBlock game component.
  */
 export const Game: Component = () => {
-  const [gridState, setGridState] = createGridStore()
-  const [viewState, setViewState] = createViewStore()
+  const {
+    grid: gridState,
+    setGrid: setGridState,
+    view: viewState,
+    setView: setViewState,
+  } = useGame()
 
-  const { animating, animateGrid, blockRefs } = useFlipAnimation((newGrid) =>
-    setGridState('grid', newGrid),
-  )
+  const { animateGrid, blockRefs } = useFlipAnimation()
 
-  // Synchronize store with hook state (per requirements, useFlipAnimation isn't refactored yet)
   const audio = useToneBlockAudio(() => gridState.grid)
 
   onMount(() => {
@@ -96,8 +96,6 @@ export const Game: Component = () => {
 
   const animateMove = async (block: Block | null, duration?: number) =>
     await animateGrid(moveBlock(block, gridState.grid), duration)
-
-  createEffect(on(animating, (value) => setViewState('animating', value)))
 
   const onKeyDown = (e: KeyboardEvent) => {
     const direction = getDirectionFromKey(e.key)

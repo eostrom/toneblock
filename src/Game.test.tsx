@@ -3,11 +3,16 @@ import { describe, it, expect, test } from 'vitest'
 import { Game } from './Game'
 import '@testing-library/jest-dom'
 import userEvent from '@testing-library/user-event'
+import { GameProvider } from './stores/GameContext'
 
 describe('Game', () => {
   test('visual order matches the DOM order after blocks are moved', async () => {
     const user = userEvent.setup()
-    render(() => <Game />)
+    render(() => (
+      <GameProvider>
+        <Game />
+      </GameProvider>
+    ))
 
     const block4 = screen.getByRole('button', { name: '4' })
     await user.click(block4)
@@ -29,7 +34,11 @@ describe('Game', () => {
   describe('active block', () => {
     it('sets a movable block as active on hover', async () => {
       const user = userEvent.setup()
-      render(() => <Game />)
+      render(() => (
+        <GameProvider>
+          <Game />
+        </GameProvider>
+      ))
       const movableBlock = screen.getByRole('button', { name: '15' })
 
       await user.hover(movableBlock)
@@ -40,7 +49,11 @@ describe('Game', () => {
     })
 
     it('sets a movable block as active on focus', async () => {
-      render(() => <Game />)
+      render(() => (
+        <GameProvider>
+          <Game />
+        </GameProvider>
+      ))
       const movableBlock = screen.getByRole('button', { name: '15' })
 
       movableBlock.focus()
@@ -50,7 +63,11 @@ describe('Game', () => {
 
     it('does not set an unmovable block as active on hover', async () => {
       const user = userEvent.setup()
-      render(() => <Game />)
+      render(() => (
+        <GameProvider>
+          <Game />
+        </GameProvider>
+      ))
       const unmovableBlock = screen.getByRole('button', { name: '1' })
 
       await user.hover(unmovableBlock)
@@ -64,7 +81,11 @@ describe('Game', () => {
 
     it('reverts to hovered block on blur if it is movable', async () => {
       const user = userEvent.setup()
-      render(() => <Game />)
+      render(() => (
+        <GameProvider>
+          <Game />
+        </GameProvider>
+      ))
       const focusBlock = screen.getByRole('button', { name: '12' }) // movable (Down)
       const hoverBlock = screen.getByRole('button', { name: '15' }) // movable (Right)
 
@@ -80,7 +101,11 @@ describe('Game', () => {
 
     it('reverts to focused block on unhover if it is movable', async () => {
       const user = userEvent.setup()
-      render(() => <Game />)
+      render(() => (
+        <GameProvider>
+          <Game />
+        </GameProvider>
+      ))
       const focusBlock = screen.getByRole('button', { name: '12' }) // movable (Down)
       const hoverBlock = screen.getByRole('button', { name: '15' }) // movable (Right)
       const emptyCell = screen.getByRole('button', { name: 'empty' })
@@ -98,7 +123,11 @@ describe('Game', () => {
 
     it('keeps focused block active when hovering an unmovable block', async () => {
       const user = userEvent.setup()
-      render(() => <Game />)
+      render(() => (
+        <GameProvider>
+          <Game />
+        </GameProvider>
+      ))
       const movableBlock = screen.getByRole('button', { name: '12' })
       const unmovableBlock = screen.getByRole('button', { name: '1' })
       const emptyCell = screen.getByRole('button', { name: 'empty' })
@@ -113,7 +142,11 @@ describe('Game', () => {
 
     it('keeps hovered block active when focusing an unmovable block', async () => {
       const user = userEvent.setup()
-      render(() => <Game />)
+      render(() => (
+        <GameProvider>
+          <Game />
+        </GameProvider>
+      ))
       const movableBlock = screen.getByRole('button', { name: '15' })
       const unmovableBlock = screen.getByRole('button', { name: '1' })
 

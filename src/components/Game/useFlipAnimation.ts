@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js'
+import { useGame } from '../../stores/GameContext'
 import type { Block, Grid } from '../../block/types'
 import { blocks } from '../../block/constants'
 
@@ -7,13 +7,11 @@ import { blocks } from '../../block/constants'
  *
  * The caller is responsible for setting values in the `blockRefs` map when rendering the grid.
  * It should call `animateGrid` to animate the transition to a new grid.
- * While the animation is in progress, `animating` will be true.
  *
- * @param setGrid - A function to update the grid state.
- * @returns An object containing `animating`, `animateGrid`, and `blockRefs`.
+ * @returns An object containing `animateGrid` and `blockRefs`.
  */
-export const useFlipAnimation = (setGrid: (grid: Grid) => unknown) => {
-  const [animating, setAnimating] = createSignal(false)
+export const useFlipAnimation = () => {
+  const { setGrid, setView } = useGame()
   const blockRefs = new Map<Block | null, HTMLElement>()
 
   /**
@@ -27,7 +25,7 @@ export const useFlipAnimation = (setGrid: (grid: Grid) => unknown) => {
     newGrid: Grid,
     duration: number = 300,
   ): Promise<void> => {
-    setAnimating(true)
+    setView('animating', true)
     const rects = new Map<Block | null, DOMRect>()
 
     // FLIP: First (Capture initial positions)
@@ -37,7 +35,7 @@ export const useFlipAnimation = (setGrid: (grid: Grid) => unknown) => {
     })
 
     // FLIP: Last (Update state/DOM)
-    setGrid(newGrid)
+    setGrid('grid', newGrid)
 
     // Wait for DOM to update.
     const frame = requestAnimationFrame(() => {
@@ -69,14 +67,13 @@ export const useFlipAnimation = (setGrid: (grid: Grid) => unknown) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         cancelAnimationFrame(frame)
-        setAnimating(false)
+        setView('animating', false)
         resolve()
       }, duration)
     })
   }
 
   return {
-    animating,
     animateGrid,
     blockRefs,
   }

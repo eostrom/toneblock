@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook } from '@solidjs/testing-library'
-import { createSignal } from 'solid-js'
 import { useFlipAnimation } from './useFlipAnimation'
 import { solvedGrid } from '../../block/constants'
+import { GameProvider, useGame } from '../../stores/GameContext'
 
 describe('`useFlipAnimation`', () => {
   beforeEach(() => {
@@ -10,35 +10,48 @@ describe('`useFlipAnimation`', () => {
   })
 
   it('updates the grid when `animateGrid` is called', async () => {
-    const [grid, setGrid] = createSignal(solvedGrid)
-    const { result } = renderHook(() => useFlipAnimation(setGrid))
+    const { result } = renderHook(
+      () => {
+        const animation = useFlipAnimation()
+        const game = useGame()
+        return { ...animation, game }
+      },
+      { wrapper: GameProvider },
+    )
 
     const newGrid = solvedGrid.toReversed()
     const promise = result.animateGrid(newGrid)
 
-    expect(grid()).toBe(newGrid)
+    expect(result.game.grid.grid).toStrictEqual(newGrid)
 
     vi.runAllTimers()
     await promise
   })
 
   it('manages `animating` state', async () => {
-    const [, setGrid] = createSignal(solvedGrid)
-    const { result } = renderHook(() => useFlipAnimation(setGrid))
+    const { result } = renderHook(
+      () => {
+        const animation = useFlipAnimation()
+        const game = useGame()
+        return { ...animation, game }
+      },
+      { wrapper: GameProvider },
+    )
 
-    expect(result.animating()).toBe(false)
+    expect(result.game.view.animating).toBe(false)
 
     const promise = result.animateGrid(solvedGrid)
-    expect(result.animating()).toBe(true)
+    expect(result.game.view.animating).toBe(true)
 
     vi.runAllTimers()
     await promise
-    expect(result.animating()).toBe(false)
+    expect(result.game.view.animating).toBe(false)
   })
 
   it('applies FLIP transformations to elements', async () => {
-    const [, setGrid] = createSignal(solvedGrid)
-    const { result } = renderHook(() => useFlipAnimation(setGrid))
+    const { result } = renderHook(() => useFlipAnimation(), {
+      wrapper: GameProvider,
+    })
 
     const mockElement = {
       style: { transform: '', transition: '' },
