@@ -1,6 +1,5 @@
 import { type Component, For, onMount } from 'solid-js'
 import { unwait } from './utils/promise'
-import springSkyImage from './assets/images/spring-sky.jpg'
 import type { Block, Direction } from './block/types'
 import { DELTAS, solvedGrid } from './block/constants'
 import {
@@ -8,12 +7,11 @@ import {
   getBlockAtPosition,
   getMovableBlocks,
   getMovableDirection,
-  getMovementPath,
   getPositionForBlock,
-  isBlockMovable,
   isPositionInGrid,
   moveBlock,
 } from './block/utils'
+import { Cell } from './components/Game/Cell'
 import { useToneBlockAudio } from './components/Game/useToneBlockAudio'
 import { useFlipAnimation } from './components/Game/useFlipAnimation'
 import { useGame } from './stores/GameContext'
@@ -49,30 +47,6 @@ const getDirectionFromKey = (key: string): Direction | null => {
     ArrowRight: 'Right',
   }
   return directions[key] ?? null
-}
-
-/**
- * Maps the size of a group to a Tailwind background color class.
- *
- * @param size - The size of the contiguous group.
- * @param maxSize - The maximum possible size of a group.
- * @returns A Tailwind background color class.
- */
-const getBackgroundColorForGroupSize = (
-  size: number,
-  maxSize: number,
-): string => {
-  if (size <= 1) return 'bg-gray-500'
-  if (size >= maxSize) return 'bg-white'
-
-  const step = (maxSize - 1) / 5
-
-  if (size <= 1 + step) return 'bg-gray-400'
-  if (size <= 1 + step * 2) return 'bg-gray-300'
-  if (size <= 1 + step * 3) return 'bg-gray-200'
-  if (size <= 1 + step * 4) return 'bg-gray-100'
-
-  return 'bg-white'
 }
 
 /**
@@ -118,7 +92,7 @@ export const Game: Component = () => {
     getButtonForBlock(nextBlock)?.focus()
   }
 
-  const onBlockClick = async (block: Block | null) => {
+  const handleMove = async (block: Block | null) => {
     if (viewState.busy) return
 
     const movableDirection = getMovableDirection(block, gridState.grid)
@@ -166,108 +140,13 @@ export const Game: Component = () => {
           onKeyDown={onKeyDown}
         >
           <For each={gridState.blocksInVisualOrder}>
-            {(block) => {
-              const bgColor = () => {
-                if (block === null) return 'transparent'
-
-                const group = () =>
-                  gridState.correctNeighborGroups.find(
-                    (g) => block !== null && g.has(block),
-                  )
-                const groupSize = group()?.size ?? 0
-                const maxGroupSize = gridState.width * gridState.height - 1
-                return getBackgroundColorForGroupSize(groupSize, maxGroupSize)
-              }
-
-              const correctPosition = getPositionForBlock(block, solvedGrid)
-              const pushDirection = () => {
-                const path = getMovementPath(
-                  viewState.activeBlock,
-                  gridState.grid,
-                )
-                return path.affectedBlocks.has(block) ? path.direction : null
-              }
-
-              const handleFocus = () => {
-                setViewState('focusedBlock', block)
-                if (isBlockMovable(block, gridState.grid))
-                  setViewState('activeBlock', block)
-                else if (isBlockMovable(viewState.hoveredBlock, gridState.grid))
-                  setViewState('activeBlock', viewState.hoveredBlock)
-              }
-
-              const handleBlur = () => {
-                setViewState('focusedBlock', null)
-                if (isBlockMovable(viewState.hoveredBlock, gridState.grid))
-                  setViewState('activeBlock', viewState.hoveredBlock)
-                else setViewState('activeBlock', null)
-              }
-
-              const handleMouseEnter = () => {
-                setViewState('hoveredBlock', block)
-                if (isBlockMovable(block, gridState.grid))
-                  setViewState('activeBlock', block)
-              }
-
-              const handleMouseMove = () => {
-                if (isBlockMovable(block, gridState.grid))
-                  setViewState('activeBlock', block)
-              }
-
-              const handleMouseLeave = () => {
-                setViewState('hoveredBlock', null)
-                if (isBlockMovable(viewState.focusedBlock, gridState.grid))
-                  setViewState('activeBlock', viewState.focusedBlock)
-                else setViewState('activeBlock', null)
-              }
-
-              const handleClick = () => {
-                unwait(onBlockClick)(block)
-              }
-
-              return (
-                <div
-                  ref={(element) => blockRefs.set(block, element)}
-                  class="group relative"
-                >
-                  <button
-                    name="block"
-                    class={`flex aspect-square h-full w-full items-center justify-center text-xl font-bold outline-0 outline-[rgba(219,39,119,0)] transition-all duration-200 focus:outline-4 focus:-outline-offset-4 focus:outline-[rgba(219,39,119,0.7)] ${bgColor()} bg-blend-multiply`}
-                    classList={{
-                      'cursor-wait': viewState.busy,
-                      '-translate-y-[10%]':
-                        !viewState.busy && pushDirection() === 'Up',
-                      'translate-y-[10%]':
-                        !viewState.busy && pushDirection() === 'Down',
-                      '-translate-x-[10%]':
-                        !viewState.busy && pushDirection() === 'Left',
-                      'translate-x-[10%]':
-                        !viewState.busy && pushDirection() === 'Right',
-                    }}
-                    style={{
-                      'background-image': block
-                        ? `url(${springSkyImage})`
-                        : 'none',
-                      'background-size': `${gridState.width * 100}% ${
-                        gridState.height * 100
-                      }%`,
-                      'background-position': `${(correctPosition.column / (gridState.width - 1)) * 100}% ${(correctPosition.row / (gridState.height - 1)) * 100}%`,
-                    }}
-                    disabled={viewState.busy}
-                    onFocus={handleFocus}
-                    onBlur={handleBlur}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseMove={handleMouseMove}
-                    onMouseLeave={handleMouseLeave}
-                    onClick={handleClick}
-                  >
-                    <span class="relative z-10 text-transparent">
-                      {block || 'empty'}
-                    </span>
-                  </button>
-                </div>
-              )
-            }}
+            {(block) => (
+              <Cell
+                block={block}
+                onMove={handleMove}
+                ref={(element) => blockRefs.set(block, element)}
+              />
+            )}
           </For>
         </div>
         {viewState.busy && (

@@ -20,15 +20,16 @@ export type ViewState = {
 }
 
 /** Creates the view store with derived properties using getters. */
-export const createViewStore = (): ReturnType<
-  typeof createStore<ViewState>
-> => {
+export const createViewStore = (
+  initialView: Partial<ViewState> = {},
+): ReturnType<typeof createStore<ViewState>> => {
   return createStore<ViewState>({
     animating: false,
     shuffling: false,
     activeBlock: null,
     focusedBlock: null,
     hoveredBlock: null,
+    ...initialView,
     get busy() {
       return this.animating || this.shuffling
     },
