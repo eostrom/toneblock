@@ -8,10 +8,10 @@ import { getCorrectNeighborGroups } from '../../block/utils'
  * Higher-level hook to audialize a ToneBlock grid game.
  *
  * @param biggestGroup - An accessor for the largest group of connected blocks.
- * @returns An object containing the activate function.
+ * @returns An object containing audio control functions.
  */
 export const useToneBlockAudio = (grid: Accessor<Grid>) => {
-  const { render, activate } = useAudio()
+  const { render, activate, isMuted, mute, unmute } = useAudio()
 
   const sortedGroups = createMemo(() =>
     getCorrectNeighborGroups(grid()).toSorted((a, b) => b.size - a.size),
@@ -19,11 +19,14 @@ export const useToneBlockAudio = (grid: Accessor<Grid>) => {
   const biggestGroup = createMemo(() => sortedGroups()[0])
 
   createEffect(
-    on(biggestGroup, async (group) => {
+    on([biggestGroup], async ([biggestGroup]) => {
       await activate()
-      await render(blockTones([...group].toSorted((a, b) => a - b)))
+
+      // Sort the group to ensure a consistent audio graph for Elementary.
+      const sortedGroup = [...biggestGroup].toSorted((a, b) => a - b)
+      await render(blockTones(sortedGroup))
     }),
   )
 
-  return { activate }
+  return { activate, mute, unmute, isMuted }
 }

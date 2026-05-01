@@ -19,7 +19,9 @@ describe('`useToneBlockAudio`', () => {
 
   it('renders tones when the biggest group changes', async () => {
     const [grid, setGrid] = createSignal(solvedGrid)
-    renderHook(() => useToneBlockAudio(grid))
+    const { result } = renderHook(() => useToneBlockAudio(grid))
+
+    result.unmute()
 
     await waitFor(() => {
       expect(mockRender).toHaveBeenCalledWith(
@@ -34,5 +36,23 @@ describe('`useToneBlockAudio`', () => {
         blockTones([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]),
       )
     })
+  })
+
+  it('is initially muted', () => {
+    const { result } = renderHook(() => useToneBlockAudio(() => solvedGrid))
+
+    expect(result.isMuted()).toBe(true)
+  })
+
+  it('can be unmuted and muted', () => {
+    const { result } = renderHook(() => useToneBlockAudio(() => solvedGrid))
+
+    result.unmute()
+
+    expect(result.isMuted()).toBe(false)
+
+    result.mute()
+
+    expect(result.isMuted()).toBe(true)
   })
 })

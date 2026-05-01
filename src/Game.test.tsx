@@ -156,4 +156,22 @@ describe('Game', () => {
       expect(movableBlock).toHaveClass('translate-x-[10%]')
     })
   })
+
+  it('can be unmuted and muted', async () => {
+    const user = userEvent.setup()
+    render(() => (
+      <GameProvider>
+        <Game />
+      </GameProvider>
+    ))
+    const toggleButton = screen.getByRole('button', { name: 'Unmute' })
+
+    await user.click(toggleButton)
+
+    expect(toggleButton).toHaveTextContent('Mute')
+
+    await user.click(toggleButton)
+
+    expect(toggleButton).toHaveTextContent('Unmute')
+  })
 })

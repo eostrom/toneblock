@@ -1,5 +1,6 @@
-import { createSignal, onMount } from 'solid-js'
+import { createEffect, createSignal, onMount } from 'solid-js'
 import WebRenderer from '@elemaudio/web-renderer'
+import { el } from '@elemaudio/core'
 import { unwait } from '../../utils/promise'
 
 /**
@@ -22,16 +23,27 @@ export const useAudio = () => {
     }),
   )
 
+  const [isMuted, setIsMuted] = createSignal(true)
+  const silence = el.const({ value: 0 })
+  const [currentGraph, setCurrentGraph] = createSignal<unknown>(silence)
+  const mute = () => setIsMuted(true)
+  const unmute = () => setIsMuted(false)
+
+  createEffect(
+    unwait(async () => {
+      const graph = currentGraph()
+
+      await core().render(isMuted() ? silence : graph)
+    }),
+  )
+
   const render = async (graph: unknown) => {
-    await core().render(graph)
+    setCurrentGraph(graph)
   }
 
   const activate = async () => {
     await context.resume()
   }
 
-  return {
-    render,
-    activate,
-  }
+  return { render, activate, isMuted, mute, unmute }
 }

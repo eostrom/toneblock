@@ -190,6 +190,13 @@ export const Game: Component = () => {
         >
           Shuffle
         </button>
+        <button
+          class="rounded bg-gray-200 px-4 py-2 font-bold text-gray-800 hover:bg-blue-300 disabled:opacity-50"
+          onClick={() => (audio.isMuted() ? audio.unmute() : audio.mute())}
+          disabled={viewState.busy}
+        >
+          {audio.isMuted() ? 'Unmute' : 'Mute'}
+        </button>
       </div>
     </div>
   )
