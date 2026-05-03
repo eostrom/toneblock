@@ -1,6 +1,6 @@
 import { Component, createMemo } from 'solid-js'
 import { unwait } from '../../utils/promise'
-import springSkyImage from '../../assets/images/spring-sky.jpg'
+import auroraImage from '../../assets/images/juho-luomala-iCedpGO653A-unsplash.jpg'
 import type { Block } from '../../block/types'
 import { solvedGrid } from '../../block/constants'
 import {
@@ -116,7 +116,7 @@ export const Cell: Component<Props> = (props) => {
     unwait(props.onMove)(props.block)
   }
 
-  const backgroundImage = props.block ? `url(${springSkyImage})` : 'none'
+  const backgroundImage = props.block ? `url(${auroraImage})` : 'none'
   const backgroundSize = `${gridState.width * 100}% ${gridState.height * 100}%`
   const backgroundPosition = `${(correctPosition().column / (gridState.width - 1)) * 100}% ${(correctPosition().row / (gridState.height - 1)) * 100}%`
 

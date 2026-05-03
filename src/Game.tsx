@@ -198,6 +198,17 @@ export const Game: Component = () => {
           {audio.isMuted() ? 'Unmute' : 'Mute'}
         </button>
       </div>
+
+      <div class={'text-center text-sm text-gray-400'}>
+        Photo by{' '}
+        <a href="https://unsplash.com/@juho_aleksi_luomala?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">
+          Juho Luomala
+        </a>{' '}
+        on{' '}
+        <a href="https://unsplash.com/photos/green-aurora-borealis-over-a-snowy-landscape-iCedpGO653A?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">
+          Unsplash
+        </a>
+      </div>
     </div>
   )
 }
